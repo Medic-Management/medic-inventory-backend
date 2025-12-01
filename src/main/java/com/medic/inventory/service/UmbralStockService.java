@@ -55,6 +55,7 @@ public class UmbralStockService {
         umbral.setPuntoPedido(request.getPuntoPedido());
         umbral.setStockSeguridad(request.getStockSeguridad());
         umbral.setUmbralCoberturaDias(request.getUmbralCoberturaDias());
+        umbral.setStockMaximo(request.getStockMaximo());
 
         umbral = umbralStockRepository.save(umbral);
         return mapToResponse(umbral);
@@ -77,6 +78,7 @@ public class UmbralStockService {
         umbral.setPuntoPedido(request.getPuntoPedido());
         umbral.setStockSeguridad(request.getStockSeguridad());
         umbral.setUmbralCoberturaDias(request.getUmbralCoberturaDias());
+        umbral.setStockMaximo(request.getStockMaximo());
 
         umbral = umbralStockRepository.save(umbral);
         return mapToResponse(umbral);
@@ -101,6 +103,7 @@ public class UmbralStockService {
         response.setPuntoPedido(umbral.getPuntoPedido());
         response.setStockSeguridad(umbral.getStockSeguridad());
         response.setUmbralCoberturaDias(umbral.getUmbralCoberturaDias());
+        response.setStockMaximo(umbral.getStockMaximo());
         return response;
     }
 }

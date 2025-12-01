@@ -20,6 +20,7 @@ public class SolicitudCompraService {
     private final SupplierRepository supplierRepository;
     private final UserRepository userRepository;
     private final SedeRepository sedeRepository;
+    private final UmbralStockRepository umbralStockRepository;
 
     @Transactional
     public SolicitudCompraResponse crearSolicitud(SolicitudCompraRequest request, Long userId) {
@@ -50,15 +51,44 @@ public class SolicitudCompraService {
         Supplier proveedor = supplierRepository.findById(proveedorId)
             .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
 
-        // HU-04: Ajustar cantidad según stock máximo si existe
-        Integer cantidadAjustada = cantidad;
-        String motivoAjuste = null;
-
-        // Nota: Aquí se puede agregar lógica de stock máximo si existe en Product
-        // Por ahora solo registramos la cantidad sugerida
-
         Sede sede = sedeRepository.findById(1L)
             .orElseThrow(() -> new RuntimeException("Sede no encontrada"));
+
+        // HU-04.3: Ajustar cantidad según stock máximo configurado en UmbralStock
+        int cantidadAjustada = cantidad;
+        String motivoAjuste = null;
+
+        // Buscar umbral configurado para este producto/sede
+        var umbralOpt = umbralStockRepository.findBySedeIdAndProductoId(sede.getId(), productoId);
+        if (umbralOpt.isPresent()) {
+            UmbralStock umbral = umbralOpt.get();
+            Integer stockMaximo = umbral.getStockMaximo();
+
+            if (stockMaximo != null && stockMaximo > 0) {
+                // Calcular stock futuro si se hace este pedido
+                int stockFuturo = stockActual + cantidad;
+
+                // Si excede el máximo, ajustar la cantidad
+                if (stockFuturo > stockMaximo) {
+                    int cantidadOptima = stockMaximo - stockActual;
+
+                    // Solo ajustar si la cantidad óptima es positiva
+                    if (cantidadOptima > 0 && cantidadOptima < cantidad) {
+                        cantidadAjustada = cantidadOptima;
+                        motivoAjuste = String.format(
+                            "Ajustado de %d a %d unidades para no exceder stock máximo de %d (stock actual: %d)",
+                            cantidad, cantidadAjustada, stockMaximo, stockActual
+                        );
+                    } else if (cantidadOptima <= 0) {
+                        // Si ya estamos en o sobre el máximo, cancelar pedido
+                        throw new RuntimeException(
+                            String.format("Stock actual (%d) ya alcanzó o superó el máximo configurado (%d). Pedido automático cancelado.",
+                                stockActual, stockMaximo)
+                        );
+                    }
+                }
+            }
+        }
 
         RestockRequest solicitud = new RestockRequest();
         solicitud.setSede(sede);

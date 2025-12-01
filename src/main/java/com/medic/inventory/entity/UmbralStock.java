@@ -33,6 +33,10 @@ public class UmbralStock {
     @Column(name = "umbral_cobertura_dias")
     private Integer umbralCoberturaDias = 15;
 
+    // HU-04.3: Stock máximo permitido para ajustar pedidos automáticos
+    @Column(name = "stock_maximo")
+    private Integer stockMaximo;
+
     @Column(name = "Column5")
     private String column5;
 

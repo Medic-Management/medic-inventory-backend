@@ -19,4 +19,7 @@ public class UmbralStockRequest {
 
     // HU-17: Umbral de cobertura en días
     private Integer umbralCoberturaDias = 15;
+
+    // HU-04.3: Stock máximo permitido
+    private Integer stockMaximo;
 }
