@@ -192,7 +192,7 @@ public class AlertaService {
 
         // Calcular KPIs
         long totalAlertas = alertas.size();
-        long alertasActivas = alertas.stream().filter(AlertaResponse::isActiva).count();
+        long alertasActivas = alertas.stream().filter(a -> Boolean.TRUE.equals(a.getActiva())).count();
         long alertasResueltas = totalAlertas - alertasActivas;
 
         long alertasAltas = alertas.stream()
@@ -204,7 +204,7 @@ public class AlertaService {
 
         // Medicamentos más críticos (Top 10)
         List<AlertaResponse> top10Criticos = alertas.stream()
-            .filter(AlertaResponse::isActiva)
+            .filter(a -> Boolean.TRUE.equals(a.getActiva()))
             .limit(10)
             .collect(Collectors.toList());
 
