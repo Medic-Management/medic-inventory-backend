@@ -99,4 +99,31 @@ public class DispensacionService {
             return response;
         }).collect(Collectors.toList());
     }
+
+    public DispensacionResponse obtenerDispensacionPorId(Long id) {
+        Dispensacion dispensacion = dispensacionRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Dispensación no encontrada"));
+
+        DispensacionResponse response = new DispensacionResponse();
+        response.setId(dispensacion.getId());
+        response.setCantidad(dispensacion.getCantidad());
+        response.setFechaDispensacion(dispensacion.getCreadoEn());
+
+        dispensacion.getDispensadoPor().ifPresent(user -> {
+            response.setDispensadoPorId(user.getId());
+            response.setDispensadoPorNombre(user.getNombreCompleto());
+        });
+
+        dispensacion.getLote().ifPresent(lote -> {
+            response.setLoteId(lote.getId());
+            response.setCodigoLote(lote.getCodigoProductoProv());
+
+            if (lote.getProducto() != null) {
+                response.setProductoId(lote.getProducto().getId());
+                response.setProductoNombre(lote.getProducto().getNombre());
+            }
+        });
+
+        return response;
+    }
 }
