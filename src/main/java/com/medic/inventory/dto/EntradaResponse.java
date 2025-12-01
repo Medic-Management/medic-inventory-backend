@@ -17,4 +17,6 @@ public class EntradaResponse {
     private String registradoPorNombre;
     private Integer stockAnterior;
     private Integer stockNuevo;
+    private Long proveedorId;
+    private String proveedorNombre;
 }

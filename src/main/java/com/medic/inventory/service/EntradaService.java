@@ -85,4 +85,47 @@ public class EntradaService {
 
         return response;
     }
+
+    /**
+     * HU-01: Obtener entrada por ID para generación de PDF
+     */
+    @Transactional(readOnly = true)
+    public EntradaResponse obtenerEntradaPorId(Long id) {
+        Movimiento movimiento = movimientoRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Entrada no encontrada"));
+
+        if (!"ENTRADA".equals(movimiento.getTipo())) {
+            throw new RuntimeException("El movimiento especificado no es una entrada");
+        }
+
+        EntradaResponse response = new EntradaResponse();
+        response.setId(movimiento.getId());
+        response.setCantidad(movimiento.getCantidad());
+        response.setDocumentoReferencia(movimiento.getDocRef());
+        response.setOcurrioEn(movimiento.getOcurrioEn());
+        response.setRegistradoPor(movimiento.getCreadoPor() != null ? movimiento.getCreadoPor().longValue() : null);
+
+        // Buscar usuario que creó la entrada
+        if (movimiento.getCreadoPor() != null) {
+            userRepository.findById(movimiento.getCreadoPor().longValue()).ifPresent(user -> {
+                response.setRegistradoPorNombre(user.getNombreCompleto());
+            });
+        }
+
+        // Buscar información del lote y producto
+        loteRepository.findById(movimiento.getLoteId()).ifPresent(lote -> {
+            response.setLoteId(lote.getId());
+            response.setCodigoLote(lote.getCodigoProductoProv());
+
+            if (lote.getProducto() != null) {
+                response.setProductoId(lote.getProducto().getId());
+                response.setProductoNombre(lote.getProducto().getNombre());
+            }
+        });
+
+        // Proveedor: Por ahora "Sin especificar" ya que no se guarda en movimiento
+        response.setProveedorNombre("Sin especificar");
+
+        return response;
+    }
 }
