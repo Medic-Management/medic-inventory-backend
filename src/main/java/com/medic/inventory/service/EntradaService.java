@@ -24,6 +24,7 @@ public class EntradaService {
     private final ProductRepository productRepository;
     private final LoteRepository loteRepository;
     private final UserRepository userRepository;
+    private final UmbralStockRepository umbralStockRepository;
 
     // HU-01: Umbral configurable para alertas de vencimiento (90 días por defecto)
     private static final int UMBRAL_VENCIMIENTO_DIAS = 90;
