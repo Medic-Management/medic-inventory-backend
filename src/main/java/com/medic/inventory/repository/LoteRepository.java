@@ -24,10 +24,10 @@ public interface LoteRepository extends JpaRepository<Lote, Long> {
 
     // HU-11: FEFO con filtro por sede
     @Query("SELECT DISTINCT l FROM Lote l " +
-           "JOIN Inventario i ON i.lote.id = l.id " +
+           "JOIN Inventario i ON i.loteId = l.id " +
            "WHERE l.producto.id = :productoId " +
-           "AND i.sede.id = :sedeId " +
-           "AND i.cantidadDisponible > 0 " +
+           "AND i.sedeId = :sedeId " +
+           "AND i.cantidad > 0 " +
            "AND l.estado = true " +
            "ORDER BY l.fechaVencimiento ASC")
     List<Lote> findByProductoIdAndSedeIdWithStockOrderByFechaVencimiento(Long productoId, Long sedeId);
