@@ -26,7 +26,7 @@ public class EntradaController {
     private final ComprobanteService comprobanteService;
 
     @PostMapping
-    public ResponseEntity<EntradaResponse> registrarEntrada(
+    public ResponseEntity<?> registrarEntrada(
             @Valid @RequestBody EntradaRequest request,
             Authentication authentication) {
         try {
@@ -37,7 +37,9 @@ public class EntradaController {
             EntradaResponse response = entradaService.registrarEntrada(request, user.getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            // HU-01: Devolver mensaje de error para manejo en frontend
+            return ResponseEntity.badRequest()
+                .body(java.util.Map.of("message", e.getMessage()));
         }
     }
 
