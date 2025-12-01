@@ -22,19 +22,33 @@ public class DispensacionService {
     private final LoteRepository loteRepository;
     private final UserRepository userRepository;
     private final AlertaService alertaService;
+    private final LoteService loteService;
 
     @Transactional
     public DispensacionResponse registrarDispensacion(DispensacionRequest request, Long userId) {
         Product producto = productRepository.findById(request.getProductoId())
             .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
-        Lote lote = loteRepository.findById(request.getLoteId())
+        // HU-11: FEFO - Si no se especifica loteId o es 0, seleccionar automáticamente el lote que vence primero
+        Long loteIdFinal = request.getLoteId();
+        boolean fefoAplicado = false;
+
+        if (loteIdFinal == null || loteIdFinal == 0) {
+            var primerLoteFEFO = loteService.obtenerPrimerLoteFEFO(request.getProductoId(), 1L);
+            if (primerLoteFEFO == null) {
+                throw new RuntimeException("No hay lotes disponibles con stock para este producto");
+            }
+            loteIdFinal = primerLoteFEFO.getId();
+            fefoAplicado = true;
+        }
+
+        Lote lote = loteRepository.findById(loteIdFinal)
             .orElseThrow(() -> new RuntimeException("Lote no encontrado"));
 
         User usuario = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        Inventario inventario = inventarioRepository.findBySedeIdAndLoteId(1L, request.getLoteId())
+        Inventario inventario = inventarioRepository.findBySedeIdAndLoteId(1L, loteIdFinal)
             .orElseThrow(() -> new RuntimeException("No hay stock disponible para este lote"));
 
         if (inventario.getCantidad() < request.getCantidad()) {
@@ -100,21 +114,34 @@ public class DispensacionService {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * Obtener dispensación (movimiento de salida) por ID
+     */
     public DispensacionResponse obtenerDispensacionPorId(Long id) {
-        Dispensacion dispensacion = dispensacionRepository.findById(id)
+        Movimiento movimiento = movimientoRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Dispensación no encontrada"));
 
+        if (!"SALIDA".equals(movimiento.getTipo())) {
+            throw new RuntimeException("El movimiento especificado no es una dispensación/salida");
+        }
+
         DispensacionResponse response = new DispensacionResponse();
-        response.setId(dispensacion.getId());
-        response.setCantidad(dispensacion.getCantidad());
-        response.setFechaDispensacion(dispensacion.getCreadoEn());
+        response.setId(movimiento.getId());
+        response.setCantidad(movimiento.getCantidad());
+        response.setMotivo(movimiento.getMotivo());
+        response.setDocumentoReferencia(movimiento.getDocRef());
+        response.setOcurrioEn(movimiento.getOcurrioEn());
+        response.setDispensadoPor(movimiento.getCreadoPor() != null ? movimiento.getCreadoPor().longValue() : null);
 
-        dispensacion.getDispensadoPor().ifPresent(user -> {
-            response.setDispensadoPorId(user.getId());
-            response.setDispensadoPorNombre(user.getNombreCompleto());
-        });
+        // Buscar usuario que creó la dispensación
+        if (movimiento.getCreadoPor() != null) {
+            userRepository.findById(movimiento.getCreadoPor().longValue()).ifPresent(user -> {
+                response.setDispensadoPorNombre(user.getNombreCompleto());
+            });
+        }
 
-        dispensacion.getLote().ifPresent(lote -> {
+        // Buscar información del lote
+        loteRepository.findById(movimiento.getLoteId()).ifPresent(lote -> {
             response.setLoteId(lote.getId());
             response.setCodigoLote(lote.getCodigoProductoProv());
 
