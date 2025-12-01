@@ -6,6 +6,8 @@ import com.medic.inventory.entity.User;
 import com.medic.inventory.repository.UserRepository;
 import com.medic.inventory.service.DispensacionService;
 import com.medic.inventory.service.ComprobanteService;
+import com.medic.inventory.service.AuditLogService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -26,20 +28,43 @@ public class DispensacionController {
     private final DispensacionService dispensacionService;
     private final UserRepository userRepository;
     private final ComprobanteService comprobanteService;
+    private final AuditLogService auditLogService;
 
     @PostMapping
     public ResponseEntity<DispensacionResponse> registrarDispensacion(
             @Valid @RequestBody DispensacionRequest request,
-            Authentication authentication) {
+            Authentication authentication,
+            HttpServletRequest httpRequest) {
         try {
             String email = authentication.getName();
             User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
             DispensacionResponse response = dispensacionService.registrarDispensacion(request, user.getId());
+
+            String ipAddress = getClientIpAddress(httpRequest);
+            auditLogService.logAction(
+                user.getId(),
+                user.getNombreCompleto(),
+                "DISPENSACION_CREADA",
+                "Dispensacion",
+                response.getId(),
+                String.format("Dispensación de %d unidades de %s", response.getCantidad(), response.getProductoNombre()),
+                ipAddress
+            );
+
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String xForwardedForHeader = request.getHeader("X-Forwarded-For");
+        if (xForwardedForHeader == null) {
+            return request.getRemoteAddr();
+        } else {
+            return xForwardedForHeader.split(",")[0];
         }
     }
 
