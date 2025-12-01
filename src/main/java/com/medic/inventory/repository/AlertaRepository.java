@@ -28,4 +28,7 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long> {
     List<Alerta> findBySedeIdAndProductoIdAndTipoAndActiva(Long sedeId, Long productoId, String tipo, Integer activa);
 
     List<Alerta> findByTipoAndActivaOrderByNivelDesc(String tipo, Integer activa);
+
+    // HU-03 Escenario 2: Reporte consolidado de alertas por rango de fechas
+    List<Alerta> findByDisparadaEnBetween(java.time.LocalDateTime desde, java.time.LocalDateTime hasta);
 }

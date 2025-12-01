@@ -6,12 +6,15 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
+import com.medic.inventory.dto.AlertaResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -152,6 +155,116 @@ public class ComprobanteService {
         } catch (Exception e) {
             log.error("Error generando comprobante de entrada", e);
             throw new RuntimeException("Error al generar comprobante PDF", e);
+        }
+    }
+
+    /**
+     * HU-03 Escenario 2: Genera reporte consolidado de alertas en PDF
+     */
+    @SuppressWarnings("unchecked")
+    public byte[] generarReporteAlertas(Map<String, Object> reporteData) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            PdfWriter writer = new PdfWriter(baos);
+            PdfDocument pdf = new PdfDocument(writer);
+            Document document = new Document(pdf);
+
+            // Título
+            document.add(new Paragraph("REPORTE CONSOLIDADO DE ALERTAS")
+                    .setFontSize(18)
+                    .setBold()
+                    .setTextAlignment(TextAlignment.CENTER));
+
+            document.add(new Paragraph("Sistema de Inventario Médico")
+                    .setFontSize(12)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginBottom(20));
+
+            // Período del reporte
+            LocalDateTime desde = (LocalDateTime) reporteData.get("periodoDesde");
+            LocalDateTime hasta = (LocalDateTime) reporteData.get("periodoHasta");
+            document.add(new Paragraph("Período: " + desde.format(DATE_FORMATTER) + " - " + hasta.format(DATE_FORMATTER))
+                    .setFontSize(10)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginBottom(10));
+
+            // KPIs
+            document.add(new Paragraph("Indicadores Clave")
+                    .setFontSize(14)
+                    .setBold()
+                    .setMarginTop(10));
+
+            Table kpiTable = new Table(2);
+            kpiTable.setWidth(500);
+
+            kpiTable.addCell("Total de Alertas:");
+            kpiTable.addCell(String.valueOf(reporteData.get("totalAlertas")));
+
+            kpiTable.addCell("Alertas Activas:");
+            kpiTable.addCell(String.valueOf(reporteData.get("alertasActivas")));
+
+            kpiTable.addCell("Alertas Resueltas:");
+            kpiTable.addCell(String.valueOf(reporteData.get("alertasResueltas")));
+
+            kpiTable.addCell("Nivel ALTA:");
+            kpiTable.addCell(String.valueOf(reporteData.get("alertasAltas")));
+
+            kpiTable.addCell("Nivel MEDIA:");
+            kpiTable.addCell(String.valueOf(reporteData.get("alertasMedias")));
+
+            kpiTable.addCell("Nivel BAJA:");
+            kpiTable.addCell(String.valueOf(reporteData.get("alertasBajas")));
+
+            document.add(kpiTable);
+
+            // Top 10 Críticos
+            document.add(new Paragraph("\nTop 10 Medicamentos Críticos")
+                    .setFontSize(14)
+                    .setBold()
+                    .setMarginTop(20));
+
+            List<AlertaResponse> top10 = (List<AlertaResponse>) reporteData.get("top10Criticos");
+
+            if (top10 != null && !top10.isEmpty()) {
+                Table alertTable = new Table(new float[]{1, 3, 2, 2, 2});
+                alertTable.setWidth(500);
+
+                alertTable.addHeaderCell("ID");
+                alertTable.addHeaderCell("Producto");
+                alertTable.addHeaderCell("Sede");
+                alertTable.addHeaderCell("Nivel");
+                alertTable.addHeaderCell("Stock Actual");
+
+                for (AlertaResponse alerta : top10) {
+                    alertTable.addCell(String.valueOf(alerta.getId()));
+                    alertTable.addCell(alerta.getProductoNombre());
+                    alertTable.addCell(alerta.getSedeNombre());
+                    alertTable.addCell(alerta.getNivel());
+                    alertTable.addCell(String.valueOf(alerta.getStockActual()));
+                }
+
+                document.add(alertTable);
+            } else {
+                document.add(new Paragraph("No hay alertas críticas activas")
+                        .setFontSize(10)
+                        .setItalic());
+            }
+
+            // Pie de página
+            document.add(new Paragraph("\nDocumento generado automáticamente el " +
+                    LocalDateTime.now().format(DATE_FORMATTER))
+                    .setFontSize(10)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginTop(30));
+
+            document.close();
+
+            log.info("Reporte consolidado de alertas generado exitosamente");
+            return baos.toByteArray();
+
+        } catch (Exception e) {
+            log.error("Error generando reporte de alertas", e);
+            throw new RuntimeException("Error al generar reporte de alertas PDF", e);
         }
     }
 }
