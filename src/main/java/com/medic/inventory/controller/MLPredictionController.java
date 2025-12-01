@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/ml")
@@ -128,16 +129,27 @@ public class MLPredictionController {
     @GetMapping("/predict/resumen")
     public ResponseEntity<?> obtenerResumenPredicciones() {
         try {
-            log.info("Obteniendo resumen de predicciones ML");
+            log.info("Obteniendo resumen de predicciones ML (ASYNC)");
 
-            PicoDemandaResponseDTO picosDemanda = mlPredictionService.predecirPicosDemanda();
-            RiesgoVencimientoResponseDTO riesgoVencimiento = mlPredictionService.predecirRiesgoVencimiento();
+            // Ejecutar ambas predicciones EN PARALELO sin bloquear threads
+            CompletableFuture<PicoDemandaResponseDTO> futurePicosDemanda =
+                    mlPredictionService.predecirPicosDemandaAsync();
+            CompletableFuture<RiesgoVencimientoResponseDTO> futureRiesgoVencimiento =
+                    mlPredictionService.predecirRiesgoVencimientoAsync();
+
+            // Esperar a que AMBAS terminen (se ejecutan en paralelo)
+            CompletableFuture.allOf(futurePicosDemanda, futureRiesgoVencimiento).join();
+
+            // Obtener resultados
+            PicoDemandaResponseDTO picosDemanda = futurePicosDemanda.get();
+            RiesgoVencimientoResponseDTO riesgoVencimiento = futureRiesgoVencimiento.get();
 
             Map<String, Object> resumen = new HashMap<>();
             resumen.put("picos_demanda", picosDemanda);
             resumen.put("riesgo_vencimiento", riesgoVencimiento);
             resumen.put("timestamp", System.currentTimeMillis());
 
+            log.info("Resumen de predicciones ML completado (ASYNC)");
             return ResponseEntity.ok(resumen);
 
         } catch (Exception e) {

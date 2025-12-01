@@ -8,8 +8,11 @@ import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.concurrent.CompletableFuture;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -281,6 +284,30 @@ public class MLPredictionService {
         } catch (Exception e) {
             log.error("Error al predecir riesgo de vencimiento: {}", e.getMessage(), e);
             throw new RuntimeException("Error al comunicarse con el servicio ML: " + e.getMessage());
+        }
+    }
+
+    @Async
+    public CompletableFuture<PicoDemandaResponseDTO> predecirPicosDemandaAsync() {
+        log.info("[ASYNC] Solicitando predicción de picos de demanda al servicio ML");
+        try {
+            PicoDemandaResponseDTO response = predecirPicosDemanda();
+            return CompletableFuture.completedFuture(response);
+        } catch (Exception e) {
+            log.error("[ASYNC] Error al predecir picos de demanda: {}", e.getMessage(), e);
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    @Async
+    public CompletableFuture<RiesgoVencimientoResponseDTO> predecirRiesgoVencimientoAsync() {
+        log.info("[ASYNC] Solicitando predicción de riesgo de vencimiento al servicio ML");
+        try {
+            RiesgoVencimientoResponseDTO response = predecirRiesgoVencimiento();
+            return CompletableFuture.completedFuture(response);
+        } catch (Exception e) {
+            log.error("[ASYNC] Error al predecir riesgo de vencimiento: {}", e.getMessage(), e);
+            return CompletableFuture.failedFuture(e);
         }
     }
 
