@@ -12,4 +12,7 @@ public class UmbralStockResponse {
     private Integer minimo;
     private Integer puntoPedido;
     private Integer stockSeguridad;
+
+    // HU-17: Umbral de cobertura en días
+    private Integer umbralCoberturaDias;
 }

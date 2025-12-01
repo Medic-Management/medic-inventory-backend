@@ -16,4 +16,7 @@ public class UmbralStockRequest {
 
     private Integer puntoPedido;
     private Integer stockSeguridad;
+
+    // HU-17: Umbral de cobertura en días
+    private Integer umbralCoberturaDias = 15;
 }

@@ -29,6 +29,10 @@ public class UmbralStock {
     @Column(name = "stock_seguridad")
     private Integer stockSeguridad;
 
+    // HU-17: Umbral de cobertura en días (stock/consumo_diario)
+    @Column(name = "umbral_cobertura_dias")
+    private Integer umbralCoberturaDias = 15;
+
     @Column(name = "Column5")
     private String column5;
 

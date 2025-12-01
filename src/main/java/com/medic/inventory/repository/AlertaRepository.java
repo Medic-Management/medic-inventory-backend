@@ -21,4 +21,11 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long> {
     boolean existsBySedeIdAndProductoIdAndActiva(Long sedeId, Long productoId, Integer activa);
 
     List<Alerta> findBySedeIdAndProductoIdAndActiva(Long sedeId, Long productoId, Integer activa);
+
+    // HU-17: Métodos para alertas de cobertura
+    boolean existsBySedeIdAndProductoIdAndTipoAndActiva(Long sedeId, Long productoId, String tipo, Integer activa);
+
+    List<Alerta> findBySedeIdAndProductoIdAndTipoAndActiva(Long sedeId, Long productoId, String tipo, Integer activa);
+
+    List<Alerta> findByTipoAndActivaOrderByNivelDesc(String tipo, Integer activa);
 }
