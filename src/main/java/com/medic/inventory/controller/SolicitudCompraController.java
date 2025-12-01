@@ -36,7 +36,7 @@ public class SolicitudCompraController {
     }
 
     @PostMapping
-    public ResponseEntity<SolicitudCompraResponse> crearSolicitud(
+    public ResponseEntity<?> crearSolicitud(
             @Valid @RequestBody SolicitudCompraRequest request,
             Authentication authentication) {
         try {
@@ -47,7 +47,7 @@ public class SolicitudCompraController {
             SolicitudCompraResponse response = solicitudCompraService.crearSolicitud(request, user.getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
         }
     }
 
