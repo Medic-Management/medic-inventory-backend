@@ -98,29 +98,39 @@ public class UserManagementController {
     }
 
     @PutMapping("/{id}/toggle-status")
-    public ResponseEntity<Void> toggleUserStatus(
+    public ResponseEntity<?> toggleUserStatus(
             @PathVariable Long id,
             Authentication authentication,
             HttpServletRequest httpRequest) {
-        UserResponse user = userManagementService.getUserById(id);
-        userManagementService.toggleUserStatus(id);
+        try {
+            UserResponse user = userManagementService.getUserById(id);
+            userManagementService.toggleUserStatus(id);
 
-        String email = authentication.getName();
-        User currentUser = userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+            String email = authentication.getName();
+            User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        String ipAddress = getClientIpAddress(httpRequest);
-        auditLogService.logAction(
-            currentUser.getId(),
-            currentUser.getNombreCompleto(),
-            "USUARIO_ESTADO_CAMBIADO",
-            "Usuario",
-            id,
-            String.format("Estado de usuario cambiado: %s", user.getNombreCompleto()),
-            ipAddress
-        );
+            String ipAddress = getClientIpAddress(httpRequest);
+            auditLogService.logAction(
+                currentUser.getId(),
+                currentUser.getNombreCompleto(),
+                "USUARIO_ESTADO_CAMBIADO",
+                "Usuario",
+                id,
+                String.format("Estado de usuario cambiado: %s", user.getNombreCompleto()),
+                ipAddress
+            );
 
-        return ResponseEntity.ok().build();
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            // HU-13 Escenario 2: Retornar mensaje específico si es el último administrador
+            if (e.getMessage().contains("ULTIMO_ADMINISTRADOR")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(java.util.Map.of("message", e.getMessage().replace("ULTIMO_ADMINISTRADOR: ", "")));
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(java.util.Map.of("message", e.getMessage()));
+        }
     }
 
     @GetMapping("/roles")

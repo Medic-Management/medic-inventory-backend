@@ -88,6 +88,22 @@ public class UserManagementService {
     public void toggleUserStatus(Long id) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // HU-13 Escenario 2: Validar que no sea el único administrador activo
+        if (user.getActivo() == 1) { // Si está activo y se va a deshabilitar
+            if (user.getRol() != null && "Administrador".equalsIgnoreCase(user.getRol().getNombre())) {
+                // Contar administradores activos
+                long adminActivosCount = userRepository.findAll().stream()
+                    .filter(u -> u.getActivo() == 1)
+                    .filter(u -> u.getRol() != null && "Administrador".equalsIgnoreCase(u.getRol().getNombre()))
+                    .count();
+
+                if (adminActivosCount <= 1) {
+                    throw new RuntimeException("ULTIMO_ADMINISTRADOR: No se puede deshabilitar el único administrador activo del sistema. Debe existir al menos un administrador activo.");
+                }
+            }
+        }
+
         user.setActivo(user.getActivo() == 1 ? 0 : 1);
         userRepository.save(user);
     }
