@@ -23,6 +23,66 @@ public class SolicitudCompraService {
 
     @Transactional
     public SolicitudCompraResponse crearSolicitud(SolicitudCompraRequest request, Long userId) {
+        return crearSolicitudConEstado(request, userId, RestockRequest.RestockStatus.DRAFT, false);
+    }
+
+    @Transactional
+    public SolicitudCompraResponse crearBorrador(SolicitudCompraRequest request, Long userId) {
+        // HU-04: Validar duplicidad - no crear si ya existe pedido pendiente
+        if (existePedidoPendiente(request.getProductoId(), request.getProveedorId())) {
+            throw new RuntimeException("Ya existe un pedido pendiente para este producto y proveedor");
+        }
+
+        return crearSolicitudConEstado(request, userId, RestockRequest.RestockStatus.DRAFT, false);
+    }
+
+    @Transactional
+    public SolicitudCompraResponse generarPedidoAutomatico(Long productoId, Long proveedorId, Integer cantidad,
+                                                          Integer stockActual, Integer nivelAlerta) {
+        // HU-04: Validar duplicidad
+        if (existePedidoPendiente(productoId, proveedorId)) {
+            throw new RuntimeException("Ya existe un pedido pendiente - no se genera duplicado");
+        }
+
+        Product producto = productRepository.findById(productoId)
+            .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        Supplier proveedor = supplierRepository.findById(proveedorId)
+            .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+
+        // HU-04: Ajustar cantidad según stock máximo si existe
+        Integer cantidadAjustada = cantidad;
+        String motivoAjuste = null;
+
+        // Nota: Aquí se puede agregar lógica de stock máximo si existe en Product
+        // Por ahora solo registramos la cantidad sugerida
+
+        Sede sede = sedeRepository.findById(1L)
+            .orElseThrow(() -> new RuntimeException("Sede no encontrada"));
+
+        RestockRequest solicitud = new RestockRequest();
+        solicitud.setSede(sede);
+        solicitud.setProduct(producto);
+        solicitud.setSupplier(proveedor);
+        solicitud.setSolicitadoPor(null); // Generado automáticamente
+        solicitud.setRequestedQuantity(cantidadAjustada);
+        solicitud.setCantidadAjustada(cantidad != cantidadAjustada ? cantidadAjustada : null);
+        solicitud.setMotivoAjuste(motivoAjuste);
+        solicitud.setCurrentStock(stockActual);
+        solicitud.setAlertLevel(nivelAlerta);
+        solicitud.setNotas("Pedido generado automáticamente por bajo stock");
+        solicitud.setStatus(RestockRequest.RestockStatus.DRAFT);
+        solicitud.setGeneradoAutomaticamente(true);
+        solicitud.setEmailSent(false);
+        solicitud.setAprobada(false);
+        solicitud.setOrigen(2); // 2 = automático
+
+        solicitud = restockRequestRepository.save(solicitud);
+        return mapToResponse(solicitud);
+    }
+
+    private SolicitudCompraResponse crearSolicitudConEstado(SolicitudCompraRequest request, Long userId,
+                                                            RestockRequest.RestockStatus estado, boolean generadoAuto) {
         Product producto = productRepository.findById(request.getProductoId())
             .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
@@ -42,13 +102,27 @@ public class SolicitudCompraService {
         solicitud.setSolicitadoPor(usuario);
         solicitud.setRequestedQuantity(request.getCantidadSolicitada());
         solicitud.setNotas(request.getNotas());
-        solicitud.setStatus(RestockRequest.RestockStatus.PENDING);
+        solicitud.setStatus(estado);
+        solicitud.setGeneradoAutomaticamente(generadoAuto);
         solicitud.setEmailSent(false);
-        solicitud.setAprobada(true);
-        solicitud.setOrigen(1);
+        solicitud.setAprobada(estado == RestockRequest.RestockStatus.PENDING || estado == RestockRequest.RestockStatus.SENT);
+        solicitud.setOrigen(generadoAuto ? 2 : 1);
 
         solicitud = restockRequestRepository.save(solicitud);
         return mapToResponse(solicitud);
+    }
+
+    private boolean existePedidoPendiente(Long productoId, Long proveedorId) {
+        // Buscar pedidos en estado DRAFT, PENDING, SENT (estados activos)
+        List<RestockRequest> pedidosPendientes = restockRequestRepository.findAll().stream()
+            .filter(r -> r.getProduct() != null && r.getProduct().getId().equals(productoId))
+            .filter(r -> r.getSupplier() != null && r.getSupplier().getId().equals(proveedorId))
+            .filter(r -> r.getStatus() == RestockRequest.RestockStatus.DRAFT ||
+                        r.getStatus() == RestockRequest.RestockStatus.PENDING ||
+                        r.getStatus() == RestockRequest.RestockStatus.SENT)
+            .collect(Collectors.toList());
+
+        return !pedidosPendientes.isEmpty();
     }
 
     public List<SolicitudCompraResponse> obtenerSolicitudes() {
@@ -87,6 +161,102 @@ public class SolicitudCompraService {
             solicitud.setStatus(RestockRequest.RestockStatus.SENT);
         }
         restockRequestRepository.save(solicitud);
+    }
+
+    // HU-08: Editar borrador
+    @Transactional
+    public SolicitudCompraResponse editarBorrador(Long id, SolicitudCompraRequest request) {
+        RestockRequest solicitud = restockRequestRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+
+        if (solicitud.getStatus() != RestockRequest.RestockStatus.DRAFT) {
+            throw new RuntimeException("Solo se pueden editar solicitudes en estado BORRADOR");
+        }
+
+        // Actualizar campos editables
+        if (request.getProductoId() != null && request.getProductoId() > 0) {
+            Product producto = productRepository.findById(request.getProductoId())
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+            solicitud.setProduct(producto);
+        }
+
+        if (request.getProveedorId() != null && request.getProveedorId() > 0) {
+            Supplier proveedor = supplierRepository.findById(request.getProveedorId())
+                .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+            solicitud.setSupplier(proveedor);
+        }
+
+        if (request.getCantidadSolicitada() != null && request.getCantidadSolicitada() > 0) {
+            solicitud.setRequestedQuantity(request.getCantidadSolicitada());
+        }
+
+        if (request.getNotas() != null) {
+            solicitud.setNotas(request.getNotas());
+        }
+
+        solicitud = restockRequestRepository.save(solicitud);
+        return mapToResponse(solicitud);
+    }
+
+    // HU-08: Aprobar borrador
+    @Transactional
+    public SolicitudCompraResponse aprobarBorrador(Long id, Long userId) {
+        RestockRequest solicitud = restockRequestRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+
+        if (solicitud.getStatus() != RestockRequest.RestockStatus.DRAFT) {
+            throw new RuntimeException("Solo se pueden aprobar solicitudes en estado BORRADOR");
+        }
+
+        User usuario = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        solicitud.setStatus(RestockRequest.RestockStatus.PENDING);
+        solicitud.setAprobada(true);
+        solicitud.setAprobadoPor(userId);
+        solicitud.setFechaAprobacion(java.time.LocalDateTime.now());
+
+        solicitud = restockRequestRepository.save(solicitud);
+        return mapToResponse(solicitud);
+    }
+
+    // HU-09: Registrar fallo de envío
+    @Transactional
+    public void registrarFalloEnvio(Long id, String motivoFallo) {
+        RestockRequest solicitud = restockRequestRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+
+        solicitud.setStatus(RestockRequest.RestockStatus.SEND_FAILED);
+        solicitud.setEmailSent(false);
+        solicitud.setNotas((solicitud.getNotas() != null ? solicitud.getNotas() + "\n" : "") +
+                          "FALLO DE ENVÍO: " + motivoFallo);
+
+        restockRequestRepository.save(solicitud);
+    }
+
+    // HU-09/HU-19: Reenviar pedido con fallo
+    @Transactional
+    public SolicitudCompraResponse reenviarPedido(Long id) {
+        RestockRequest solicitud = restockRequestRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+
+        if (solicitud.getStatus() != RestockRequest.RestockStatus.SEND_FAILED) {
+            throw new RuntimeException("Solo se pueden reenviar solicitudes con fallo de envío");
+        }
+
+        solicitud.setStatus(RestockRequest.RestockStatus.PENDING);
+        solicitud.setEmailSent(false);
+
+        solicitud = restockRequestRepository.save(solicitud);
+        return mapToResponse(solicitud);
+    }
+
+    // HU-19: Obtener solicitudes por estado
+    public List<SolicitudCompraResponse> obtenerSolicitudesPorEstado(RestockRequest.RestockStatus estado) {
+        return restockRequestRepository.findAll().stream()
+            .filter(r -> r.getStatus() == estado)
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
     }
 
     private SolicitudCompraResponse mapToResponse(RestockRequest solicitud) {

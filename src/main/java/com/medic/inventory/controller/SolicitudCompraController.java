@@ -64,4 +64,71 @@ public class SolicitudCompraController {
         solicitudCompraService.marcarEmailEnviado(id);
         return ResponseEntity.ok().build();
     }
+
+    // HU-08: Editar borrador
+    @PutMapping("/{id}/editar")
+    public ResponseEntity<SolicitudCompraResponse> editarBorrador(
+            @PathVariable Long id,
+            @Valid @RequestBody SolicitudCompraRequest request) {
+        try {
+            SolicitudCompraResponse response = solicitudCompraService.editarBorrador(id, request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // HU-08: Aprobar borrador
+    @PutMapping("/{id}/aprobar")
+    public ResponseEntity<SolicitudCompraResponse> aprobarBorrador(
+            @PathVariable Long id,
+            Authentication authentication) {
+        try {
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            SolicitudCompraResponse response = solicitudCompraService.aprobarBorrador(id, user.getId());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // HU-09: Registrar fallo de envío
+    @PutMapping("/{id}/registrar-fallo")
+    public ResponseEntity<Void> registrarFalloEnvio(
+            @PathVariable Long id,
+            @RequestParam String motivo) {
+        solicitudCompraService.registrarFalloEnvio(id, motivo);
+        return ResponseEntity.ok().build();
+    }
+
+    // HU-09/HU-19: Reenviar pedido con fallo
+    @PutMapping("/{id}/reenviar")
+    public ResponseEntity<SolicitudCompraResponse> reenviarPedido(@PathVariable Long id) {
+        try {
+            SolicitudCompraResponse response = solicitudCompraService.reenviarPedido(id);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // HU-04: Generar pedido automático
+    @PostMapping("/generar-automatico")
+    public ResponseEntity<SolicitudCompraResponse> generarPedidoAutomatico(
+            @RequestParam Long productoId,
+            @RequestParam Long proveedorId,
+            @RequestParam Integer cantidad,
+            @RequestParam Integer stockActual,
+            @RequestParam Integer nivelAlerta) {
+        try {
+            SolicitudCompraResponse response = solicitudCompraService.generarPedidoAutomatico(
+                productoId, proveedorId, cantidad, stockActual, nivelAlerta);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

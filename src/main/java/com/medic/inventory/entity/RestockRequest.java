@@ -86,12 +86,29 @@ public class RestockRequest {
         creadaEn = LocalDateTime.now();
     }
 
+    @Column(name = "generado_automaticamente")
+    private Boolean generadoAutomaticamente = false;
+
+    @Column(name = "cantidad_ajustada")
+    private Integer cantidadAjustada;
+
+    @Column(name = "motivo_ajuste", length = 255)
+    private String motivoAjuste;
+
+    @Column(name = "aprobado_por")
+    private Long aprobadoPor;
+
+    @Column(name = "fecha_aprobacion")
+    private LocalDateTime fechaAprobacion;
+
     public enum RestockStatus {
-        PENDING,
-        SENT,
-        CONFIRMED,
-        IN_TRANSIT,
-        DELIVERED,
-        CANCELLED
+        DRAFT,           // Borrador - puede ser editado
+        PENDING,         // Pendiente de envío
+        SENT,            // Enviado al proveedor
+        SEND_FAILED,     // Fallo al enviar
+        CONFIRMED,       // Confirmado por proveedor
+        IN_TRANSIT,      // En tránsito
+        DELIVERED,       // Entregado
+        CANCELLED        // Cancelado
     }
 }
