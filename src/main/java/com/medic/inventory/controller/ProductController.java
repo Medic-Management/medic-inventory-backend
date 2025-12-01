@@ -37,12 +37,13 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
+    public ResponseEntity<?> createProduct(@Valid @RequestBody ProductRequest request) {
         try {
             ProductResponse product = productService.createProduct(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(product);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            // HU-12 Escenario 1: Retornar mensaje de error específico
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
         }
     }
 
@@ -59,12 +60,18 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
         try {
             productService.deleteProduct(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            // HU-12 Escenario 3: Retornar mensaje de error específico
+            if (e.getMessage().contains("PRODUCTO_EN_USO")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(java.util.Map.of("message", e.getMessage().replace("PRODUCTO_EN_USO: ", "")));
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(java.util.Map.of("message", e.getMessage()));
         }
     }
 

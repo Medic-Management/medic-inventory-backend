@@ -14,6 +14,9 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class ProductRequest {
 
+    // HU-12: Código del producto (opcional, pero debe ser único si se proporciona)
+    private String codigo;
+
     @NotBlank(message = "El nombre es obligatorio")
     private String name;
 

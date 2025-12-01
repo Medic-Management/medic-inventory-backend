@@ -28,6 +28,8 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final SupplierRepository supplierRepository;
     private final EntityManager entityManager;
+    private final com.medic.inventory.repository.LoteRepository loteRepository;
+    private final com.medic.inventory.repository.MovimientoRepository movimientoRepository;
 
     @Transactional(readOnly = true)
     public List<ProductResponse> getAllProducts() {
@@ -45,6 +47,13 @@ public class ProductService {
 
     @Transactional
     public ProductResponse createProduct(ProductRequest request) {
+        // HU-12 Escenario 1: Validar unicidad de código
+        if (request.getCodigo() != null && !request.getCodigo().isEmpty()) {
+            if (productRepository.existsByCodigo(request.getCodigo())) {
+                throw new RuntimeException("CODIGO_DUPLICADO: Ya existe un producto con el código '" + request.getCodigo() + "'");
+            }
+        }
+
         Product product = new Product();
         updateProductFromRequest(product, request);
         Product savedProduct = productRepository.save(product);
@@ -65,6 +74,26 @@ public class ProductService {
         if (!productRepository.existsById(id)) {
             throw new RuntimeException("Producto no encontrado");
         }
+
+        // HU-12 Escenario 3: Validar que no tenga movimientos vigentes antes de eliminar
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        // Verificar si tiene lotes asociados
+        long lotesCount = loteRepository.findByProductoId(id).size();
+        if (lotesCount > 0) {
+            throw new RuntimeException("PRODUCTO_EN_USO: El medicamento tiene " + lotesCount + " lote(s) asociado(s) y no se puede eliminar. Debe procesar todos los lotes primero.");
+        }
+
+        // Verificar si tiene movimientos asociados (a través de lotes)
+        List<com.medic.inventory.entity.Lote> lotes = loteRepository.findByProductoId(id);
+        for (com.medic.inventory.entity.Lote lote : lotes) {
+            long movimientosCount = movimientoRepository.findByLoteId(lote.getId()).size();
+            if (movimientosCount > 0) {
+                throw new RuntimeException("PRODUCTO_EN_USO: El medicamento tiene movimientos de inventario asociados y no se puede eliminar.");
+            }
+        }
+
         productRepository.deleteById(id);
     }
 
@@ -79,6 +108,10 @@ public class ProductService {
     }
 
     private void updateProductFromRequest(Product product, ProductRequest request) {
+        // HU-12: Actualizar código si se proporciona
+        if (request.getCodigo() != null) {
+            product.setCodigo(request.getCodigo());
+        }
         product.setName(request.getName());
         product.setBatchNumber(request.getBatchNumber());
         product.setExpirationDate(request.getExpirationDate());
