@@ -89,7 +89,7 @@ public class DispensacionController {
                 dispensacion.getCantidad(),
                 "LOTE-" + id,
                 dispensacion.getDispensadoPorNombre(),
-                dispensacion.getFechaDispensacion()
+                dispensacion.getOcurrioEn()
             );
 
             HttpHeaders headers = new HttpHeaders();

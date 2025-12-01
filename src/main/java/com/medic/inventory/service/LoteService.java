@@ -85,7 +85,7 @@ public class LoteService {
         response.setPrecioUnitario(lote.getPrecioUnitario());
 
         if (inventario != null) {
-            response.setCantidadDisponible(inventario.getCantidadDisponible());
+            response.setCantidadDisponible(inventario.getCantidad());
         } else {
             response.setCantidadDisponible(0);
         }
