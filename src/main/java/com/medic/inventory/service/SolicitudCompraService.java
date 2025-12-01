@@ -143,10 +143,10 @@ public class SolicitudCompraService {
     }
 
     private boolean existePedidoPendiente(Long productoId, Long proveedorId) {
-        // Buscar pedidos en estado DRAFT, PENDING, SENT (estados activos)
+        // HU-04 Escenario 2: Buscar CUALQUIER pedido activo para este producto (sin importar proveedor)
+        // Estados activos: DRAFT, PENDING, SENT
         List<RestockRequest> pedidosPendientes = restockRequestRepository.findAll().stream()
             .filter(r -> r.getProduct() != null && r.getProduct().getId().equals(productoId))
-            .filter(r -> r.getSupplier() != null && r.getSupplier().getId().equals(proveedorId))
             .filter(r -> r.getStatus() == RestockRequest.RestockStatus.DRAFT ||
                         r.getStatus() == RestockRequest.RestockStatus.PENDING ||
                         r.getStatus() == RestockRequest.RestockStatus.SENT)

@@ -81,6 +81,27 @@ public class EntradaService {
 
         int stockAnterior = inventario.getCantidad();
 
+        // HU-04 Escenario 3: Validar stock máximo antes de registrar entrada
+        Optional<UmbralStock> umbralOpt = umbralStockRepository.findBySedeIdAndProductoId(1L, producto.getId());
+        if (umbralOpt.isPresent()) {
+            UmbralStock umbral = umbralOpt.get();
+            Integer stockMaximo = umbral.getStockMaximo();
+
+            if (stockMaximo != null && stockMaximo > 0) {
+                int stockFuturo = stockAnterior + request.getCantidad();
+
+                if (stockFuturo > stockMaximo) {
+                    log.warn("Intento de entrada que excede stock máximo. Producto: {}, Stock actual: {}, Cantidad entrada: {}, Stock máximo: {}",
+                        producto.getNombre(), stockAnterior, request.getCantidad(), stockMaximo);
+                    throw new RuntimeException(String.format(
+                        "STOCK_MAXIMO_EXCEDIDO: La entrada de %d unidades excedería el stock máximo configurado de %d unidades. " +
+                        "Stock actual: %d. Cantidad máxima permitida: %d unidades.",
+                        request.getCantidad(), stockMaximo, stockAnterior, (stockMaximo - stockAnterior)
+                    ));
+                }
+            }
+        }
+
         Movimiento movimiento = new Movimiento();
         movimiento.setOcurrioEn(LocalDateTime.now());
         movimiento.setSedeId(1L);
