@@ -10,10 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EntradaService {
 
     private final MovimientoRepository movimientoRepository;
@@ -21,6 +24,9 @@ public class EntradaService {
     private final ProductRepository productRepository;
     private final LoteRepository loteRepository;
     private final UserRepository userRepository;
+
+    // HU-01: Umbral configurable para alertas de vencimiento (90 días por defecto)
+    private static final int UMBRAL_VENCIMIENTO_DIAS = 90;
 
     @Transactional
     public EntradaResponse registrarEntrada(EntradaRequest request, Long userId) {
@@ -30,14 +36,36 @@ public class EntradaService {
         User usuario = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        Lote lote = loteRepository.findByProductoIdAndCodigoProductoProv(
+        LocalDate fechaVencimiento = LocalDate.parse(request.getFechaVencimiento());
+
+        // HU-01 Escenario 2: Validar fecha de vencimiento próxima
+        validarFechaVencimiento(fechaVencimiento, request.getConfirmarVencimientoCercano());
+
+        // HU-01 Escenario 3: Verificar duplicidad de lote
+        Optional<Lote> loteExistente = loteRepository.findByProductoIdAndCodigoProductoProv(
             request.getProductoId(),
             request.getCodigoLote()
-        ).orElseGet(() -> {
+        );
+
+        if (loteExistente.isPresent()) {
+            Lote lote = loteExistente.get();
+            // Verificar si es exactamente el mismo lote (mismo código + fecha + producto)
+            if (lote.getFechaVencimiento() != null &&
+                lote.getFechaVencimiento().equals(fechaVencimiento)) {
+                log.warn("Intento de registro de lote duplicado. UserID: {}, Lote: {}, Producto: {}",
+                    userId, request.getCodigoLote(), producto.getNombre());
+                throw new RuntimeException("LOTE_DUPLICADO: Lote duplicado – registro no permitido. " +
+                    "Ya existe un lote con código '" + request.getCodigoLote() +
+                    "' y fecha de vencimiento " + fechaVencimiento);
+            }
+        }
+
+        // Si no es duplicado, crear o reutilizar lote
+        Lote lote = loteExistente.orElseGet(() -> {
             Lote nuevoLote = new Lote();
             nuevoLote.setProducto(producto);
             nuevoLote.setCodigoProductoProv(request.getCodigoLote());
-            nuevoLote.setFechaVencimiento(LocalDate.parse(request.getFechaVencimiento()));
+            nuevoLote.setFechaVencimiento(fechaVencimiento);
             nuevoLote.setEstado(true);
             return loteRepository.save(nuevoLote);
         });
@@ -127,5 +155,34 @@ public class EntradaService {
         response.setProveedorNombre("Sin especificar");
 
         return response;
+    }
+
+    /**
+     * HU-01 Escenario 2: Validar fecha de vencimiento próxima (< 90 días)
+     * Si el vencimiento está dentro del umbral y no hay confirmación, lanza excepción
+     */
+    private void validarFechaVencimiento(LocalDate fechaVencimiento, Boolean confirmarVencimientoCercano) {
+        LocalDate hoy = LocalDate.now();
+
+        // Validar que no sea una fecha pasada
+        if (fechaVencimiento.isBefore(hoy)) {
+            throw new RuntimeException("La fecha de vencimiento no puede ser anterior a la fecha actual");
+        }
+
+        // Calcular días hasta vencimiento
+        long diasHastaVencimiento = ChronoUnit.DAYS.between(hoy, fechaVencimiento);
+
+        // Si está dentro del umbral (90 días) y no hay confirmación, lanzar advertencia
+        if (diasHastaVencimiento <= UMBRAL_VENCIMIENTO_DIAS) {
+            if (confirmarVencimientoCercano == null || !confirmarVencimientoCercano) {
+                log.warn("Intento de registro de lote próximo a vencer sin confirmación. " +
+                    "Días hasta vencimiento: {}, Umbral: {}", diasHastaVencimiento, UMBRAL_VENCIMIENTO_DIAS);
+                throw new RuntimeException("VENCIMIENTO_CERCANO: Medicamento próximo a vencer (" +
+                    diasHastaVencimiento + " días). ¿Confirmar registro?");
+            } else {
+                log.info("Lote próximo a vencer registrado con confirmación. Días hasta vencimiento: {}",
+                    diasHastaVencimiento);
+            }
+        }
     }
 }

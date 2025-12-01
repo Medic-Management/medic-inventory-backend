@@ -22,4 +22,7 @@ public class EntradaRequest {
     private Long proveedorId;
     private String documentoReferencia;
     private String observaciones;
+
+    // HU-01 Escenario 2: Campo para confirmar registro de lote próximo a vencer
+    private Boolean confirmarVencimientoCercano = false;
 }
