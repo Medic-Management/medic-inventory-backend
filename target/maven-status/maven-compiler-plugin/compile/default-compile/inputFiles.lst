@@ -20,6 +20,8 @@ C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\jav
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\service\RestockRequestService.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\MedicInventoryApplication.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\AlertaResponse.java
+C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\service\AlertaCoberturaService.java
+C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\AuditLogResponse.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\entity\TrabajoRpa.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\entity\User.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\repository\RoleRepository.java
@@ -36,6 +38,7 @@ C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\jav
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\entity\Inventario.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\repository\AlertaRepository.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\SolicitudCompraResponse.java
+C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\controller\AlertaCoberturaController.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\repository\UserRepository.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\entity\InventarioId.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\controller\ProductController.java
@@ -48,13 +51,16 @@ C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\jav
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\service\ScheduledTaskService.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\controller\DispensacionController.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\controller\OrderController.java
+C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\entity\AuditLog.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\controller\SupplierManagementController.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\repository\MovimientoRepository.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\ml\RiesgoVencimientoResponseDTO.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\controller\AuthController.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\repository\SedeRepository.java
+C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\LoteResponse.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\RestockRequestRequest.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\config\RestTemplateConfig.java
+C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\service\LoteService.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\entity\Role.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\ProductResponse.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\entity\Sede.java
@@ -77,6 +83,8 @@ C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\jav
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\config\JwtUtil.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\AlertaVencimientoResponse.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\UserProfileResponse.java
+C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\controller\LoteController.java
+C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\service\ComprobanteService.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\repository\ProductRepository.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\repository\RestockRequestRepository.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\ProductRequest.java
@@ -104,6 +112,7 @@ C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\jav
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\UmbralStockRequest.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\UserRequest.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\ResumenDespachosDTO.java
+C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\service\AuditLogService.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\ml\PrediccionRiesgoVencimientoDTO.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\CategoriaMasVendidaDTO.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\TrabajoRpaRequest.java
@@ -113,7 +122,9 @@ C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\jav
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\entity\RestockRequest.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\controller\UserController.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\controller\MLPredictionController.java
+C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\repository\AuditLogRepository.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\service\UserManagementService.java
+C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\controller\AuditLogController.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\controller\UserManagementController.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\SolicitudCompraRequest.java
 C:\cursos\Medic Management\Medic Management\medic-inventory-backend\src\main\java\com\medic\inventory\dto\UpdateProfileRequest.java

@@ -20,3 +20,8 @@ public class CorsConfig {
         config.setAllowedOriginPatterns(Arrays.asList("*"));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        source.registerCorsConfiguration("/**", config);
+        return new CorsFilter(source);
+    }
+}
