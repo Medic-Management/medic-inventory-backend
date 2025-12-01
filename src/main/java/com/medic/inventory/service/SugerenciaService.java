@@ -18,6 +18,7 @@ public class SugerenciaService {
 
     private final ProductRepository productRepository;
     private final InventarioRepository inventarioRepository;
+    private final LoteRepository loteRepository;
     private final UmbralStockRepository umbralStockRepository;
     private final SupplierRepository supplierRepository;
 
@@ -37,16 +38,17 @@ public class SugerenciaService {
             Product producto = umbral.getProducto();
             Sede sede = umbral.getSede();
 
-            // Obtener stock actual
-            Optional<Inventario> inventarioOpt = inventarioRepository
-                .findBySedeIdAndProductoId(sede.getId(), producto.getId());
+            // Obtener stock actual sumando todos los lotes del producto en la sede
+            List<Lote> lotes = loteRepository.findByProductoId(producto.getId());
+            int stockActual = 0;
 
-            if (!inventarioOpt.isPresent()) {
-                continue;
+            for (Lote lote : lotes) {
+                Optional<Inventario> invOpt = inventarioRepository.findBySedeIdAndLoteId(sede.getId(), lote.getId());
+                if (invOpt.isPresent()) {
+                    stockActual += invOpt.get().getCantidad();
+                }
             }
 
-            Inventario inventario = inventarioOpt.get();
-            int stockActual = inventario.getCantidad();
             Integer stockMinimo = umbral.getMinimo();
 
             // Solo sugerir si stock actual < mínimo
