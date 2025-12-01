@@ -8,5 +8,7 @@ public class SupplierResponse {
     private String nombre;
     private String email;
     private String telefono;
+    private Integer leadTimeDays;
+    private Integer moq;
     private Boolean activo;
 }

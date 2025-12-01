@@ -35,6 +35,8 @@ public class SupplierManagementService {
         supplier.setNombre(request.getNombre());
         supplier.setEmail(request.getEmail());
         supplier.setTelefono(request.getTelefono());
+        supplier.setLeadTimeDays(request.getLeadTimeDays());
+        supplier.setMoq(request.getMoq());
         supplier.setIsActive(true);
 
         supplier = supplierRepository.save(supplier);
@@ -49,6 +51,8 @@ public class SupplierManagementService {
         supplier.setNombre(request.getNombre());
         supplier.setEmail(request.getEmail());
         supplier.setTelefono(request.getTelefono());
+        supplier.setLeadTimeDays(request.getLeadTimeDays());
+        supplier.setMoq(request.getMoq());
 
         supplier = supplierRepository.save(supplier);
         return mapToResponse(supplier);
@@ -68,6 +72,8 @@ public class SupplierManagementService {
         response.setNombre(supplier.getNombre());
         response.setEmail(supplier.getEmail());
         response.setTelefono(supplier.getTelefono());
+        response.setLeadTimeDays(supplier.getLeadTimeDays());
+        response.setMoq(supplier.getMoq());
         response.setActivo(supplier.getIsActive());
         return response;
     }

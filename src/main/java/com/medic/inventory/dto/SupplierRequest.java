@@ -13,4 +13,8 @@ public class SupplierRequest {
     private String email;
 
     private String telefono;
+
+    private Integer leadTimeDays;
+
+    private Integer moq;
 }

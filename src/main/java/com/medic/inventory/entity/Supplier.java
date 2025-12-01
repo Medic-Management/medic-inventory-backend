@@ -29,10 +29,10 @@ public class Supplier {
     private String telefono;
 
     @Column(name = "Column5")
-    private String column5;
+    private Integer leadTimeDays;
 
     @Column(name = "Column6")
-    private String column6;
+    private Integer moq;
 
     @Column(name = "Column7")
     private String column7;
