@@ -29,6 +29,13 @@ public class SolicitudCompraController {
         return ResponseEntity.ok(solicitudes);
     }
 
+    // CP011: Obtener pedidos aprobados para recepción de mercadería
+    @GetMapping("/aprobados")
+    public ResponseEntity<List<SolicitudCompraResponse>> obtenerPedidosAprobados() {
+        List<SolicitudCompraResponse> pedidos = solicitudCompraService.obtenerPedidosAprobados();
+        return ResponseEntity.ok(pedidos);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<SolicitudCompraResponse> obtenerSolicitudPorId(@PathVariable Long id) {
         SolicitudCompraResponse solicitud = solicitudCompraService.obtenerSolicitudPorId(id);
@@ -129,6 +136,79 @@ public class SolicitudCompraController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // CP010: Confirmar acuse de recibo manualmente
+    @PostMapping("/{id}/confirmar-acuse")
+    public ResponseEntity<?> confirmarAcuseRecibo(
+            @PathVariable Long id,
+            Authentication authentication) {
+        try {
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            SolicitudCompraResponse response = solicitudCompraService.confirmarAcuseRecibo(id, user.getId());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
+
+    // CP010: Obtener solicitudes sin confirmar (> 48 horas)
+    @GetMapping("/sin-confirmar")
+    public ResponseEntity<List<SolicitudCompraResponse>> obtenerSolicitudesSinConfirmar() {
+        List<SolicitudCompraResponse> solicitudes = solicitudCompraService.obtenerSolicitudesSinConfirmar();
+        return ResponseEntity.ok(solicitudes);
+    }
+
+    // CP010: Obtener solicitudes enviadas (estado SENT)
+    @GetMapping("/enviadas")
+    public ResponseEntity<List<SolicitudCompraResponse>> obtenerSolicitudesEnviadas() {
+        List<SolicitudCompraResponse> solicitudes = solicitudCompraService.obtenerSolicitudesEnviadas();
+        return ResponseEntity.ok(solicitudes);
+    }
+
+    // CP009: Obtener solicitudes APPROVED (aprobadas pendientes de envío)
+    @GetMapping("/aprobadas")
+    public ResponseEntity<List<SolicitudCompraResponse>> obtenerSolicitudesAprobadas() {
+        List<SolicitudCompraResponse> solicitudes = solicitudCompraService.obtenerSolicitudesAprobadas();
+        return ResponseEntity.ok(solicitudes);
+    }
+
+    // CP009: Enviar pedido individual al proveedor mediante RPA
+    @PostMapping("/{id}/enviar-al-proveedor")
+    public ResponseEntity<?> enviarAlProveedor(
+            @PathVariable Long id,
+            Authentication authentication) {
+        try {
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            SolicitudCompraResponse response = solicitudCompraService.enviarAlProveedor(id, user.getId());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
+
+    // CP009: Enviar TODAS las solicitudes aprobadas al proveedor
+    @PostMapping("/enviar-todas-al-proveedor")
+    public ResponseEntity<?> enviarTodasAlProveedor(Authentication authentication) {
+        try {
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            int enviadas = solicitudCompraService.enviarTodasAlProveedor(user.getId());
+            return ResponseEntity.ok(java.util.Map.of(
+                "message", "Pedidos enviados exitosamente (CP009)",
+                "cantidad", enviadas
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
         }
     }
 }

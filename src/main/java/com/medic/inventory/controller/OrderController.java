@@ -45,6 +45,12 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getActiveOrders());
     }
 
+    // CP020: Obtener órdenes aprobadas con fechas de entrega para calendario
+    @GetMapping("/calendario")
+    public ResponseEntity<List<Order>> getOrdersForCalendar() {
+        return ResponseEntity.ok(orderService.getOrdersForCalendar());
+    }
+
     @PostMapping
     public ResponseEntity<Order> createOrder(@RequestBody Order order) {
         Order createdOrder = orderService.createOrder(order);

@@ -39,7 +39,7 @@ public class UserManagementController {
     }
 
     @PostMapping
-    public ResponseEntity<UserResponse> createUser(
+    public ResponseEntity<?> createUser(
             @Valid @RequestBody UserRequest request,
             Authentication authentication,
             HttpServletRequest httpRequest) {
@@ -63,7 +63,9 @@ public class UserManagementController {
 
             return ResponseEntity.status(HttpStatus.CREATED).body(user);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            // HU-15: Retornar mensaje específico de error (ej: email duplicado)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(java.util.Map.of("message", e.getMessage()));
         }
     }
 

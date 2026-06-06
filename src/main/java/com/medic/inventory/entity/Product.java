@@ -49,6 +49,19 @@ public class Product {
     @Column(name = "precio_venta", precision = 10, scale = 2)
     private BigDecimal precioVenta;
 
+    // CP021: Bloqueo por retiro sanitario
+    @Column(name = "bloqueado")
+    private Boolean bloqueado = false;
+
+    @Column(name = "motivo_bloqueo", length = 255)
+    private String motivoBloqueo;
+
+    @Column(name = "bloqueado_en")
+    private LocalDateTime bloqueadoEn;
+
+    @Column(name = "bloqueado_por")
+    private Integer bloqueadoPor;
+
     @Transient
     private String name;
 

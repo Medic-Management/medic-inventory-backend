@@ -1,5 +1,6 @@
 package com.medic.inventory.controller;
 
+import com.medic.inventory.dto.BloqueoRequest;
 import com.medic.inventory.dto.ProductRequest;
 import com.medic.inventory.dto.ProductResponse;
 import com.medic.inventory.dto.ProductWithInventoryDTO;
@@ -100,6 +101,36 @@ public class ProductController {
             return ResponseEntity.ok(lotes);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * CP021: Bloquear un producto por retiro sanitario
+     */
+    @PostMapping("/{id}/bloquear")
+    public ResponseEntity<?> bloquearProducto(
+            @PathVariable Long id,
+            @RequestBody BloqueoRequest request) {
+        try {
+            ProductResponse product = productService.bloquearProducto(id, request);
+            return ResponseEntity.ok(product);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
+
+    /**
+     * CP021: Desbloquear un producto
+     */
+    @PostMapping("/{id}/desbloquear")
+    public ResponseEntity<?> desbloquearProducto(@PathVariable Long id) {
+        try {
+            ProductResponse product = productService.desbloquearProducto(id);
+            return ResponseEntity.ok(product);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(java.util.Map.of("message", e.getMessage()));
         }
     }
 }

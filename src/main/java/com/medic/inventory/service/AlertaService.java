@@ -24,6 +24,11 @@ public class AlertaService {
     private final SedeRepository sedeRepository;
     private final LoteRepository loteRepository;
 
+    // Las alertas de cobertura (HU-18) las gestiona AlertaCoberturaService según días de
+    // cobertura, no según el umbral mínimo de stock. La verificación de stock no debe
+    // contarlas ni resolverlas, o de lo contrario apaga las alertas de riesgo de quiebre.
+    private static final String TIPO_COBERTURA = "COBERTURA_BAJA";
+
     @Transactional
     public List<AlertaResponse> verificarStockYGenerarAlertas() {
         List<Alerta> alertasGeneradas = new java.util.ArrayList<>();
@@ -43,8 +48,8 @@ public class AlertaService {
                 .mapToInt(Inventario::getCantidad)
                 .sum();
 
-            boolean tieneAlertaActiva = alertaRepository.existsBySedeIdAndProductoIdAndActiva(
-                sedeId, productoId, 1
+            boolean tieneAlertaActiva = alertaRepository.existsBySedeIdAndProductoIdAndActivaAndTipoNot(
+                sedeId, productoId, 1, TIPO_COBERTURA
             );
 
             if (stockTotal <= umbral.getMinimo() && !tieneAlertaActiva) {
@@ -70,7 +75,7 @@ public class AlertaService {
             }
 
             if (stockTotal > umbral.getMinimo() && tieneAlertaActiva) {
-                alertaRepository.findBySedeIdAndProductoIdAndActiva(sedeId, productoId, 1)
+                alertaRepository.findBySedeIdAndProductoIdAndActivaAndTipoNot(sedeId, productoId, 1, TIPO_COBERTURA)
                     .forEach(alerta -> {
                         alerta.setActiva(0);
                         alerta.setResueltaEn(LocalDateTime.now());
@@ -87,6 +92,9 @@ public class AlertaService {
         List<Alerta> alertas = alertaRepository.findByActivaOrderByDisparadaEnDesc(1);
 
         return alertas.stream()
+            // Las alertas de cobertura tienen su propio endpoint y se resuelven por días
+            // de cobertura, no por stock mínimo: aquí no se procesan ni se devuelven.
+            .filter(alerta -> !TIPO_COBERTURA.equals(alerta.getTipo()))
             .filter(alerta -> {
                 Long sedeId = alerta.getSede().getId();
                 Long productoId = alerta.getProducto().getId();

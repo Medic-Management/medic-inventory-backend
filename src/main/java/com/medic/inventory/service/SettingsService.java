@@ -31,6 +31,14 @@ public class SettingsService {
         settings.setTimezone(request.getTimezone());
         settings.setDateFormat(request.getDateFormat());
 
+        // CP025: Parámetros generales del sistema
+        if (request.getCurrency() != null) {
+            settings.setCurrency(request.getCurrency());
+        }
+        if (request.getSupplierEmail() != null) {
+            settings.setSupplierEmail(request.getSupplierEmail());
+        }
+
         if (request.getNotifications() != null) {
             settings.setNotifyLowStock(request.getNotifications().getLowStock());
             settings.setNotifyExpiring(request.getNotifications().getExpiring());
@@ -62,6 +70,10 @@ public class SettingsService {
         dto.setLanguage(settings.getLanguage());
         dto.setTimezone(settings.getTimezone());
         dto.setDateFormat(settings.getDateFormat());
+
+        // CP025: Parámetros generales del sistema
+        dto.setCurrency(settings.getCurrency());
+        dto.setSupplierEmail(settings.getSupplierEmail());
 
         SettingsRequest.NotificationSettings notifications = new SettingsRequest.NotificationSettings();
         notifications.setLowStock(settings.getNotifyLowStock());

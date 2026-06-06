@@ -44,6 +44,20 @@ public class EntradaController {
     }
 
     /**
+     * CP023: Listar todas las entradas (para módulo de comprobantes)
+     */
+    @GetMapping
+    public ResponseEntity<?> obtenerTodasLasEntradas() {
+        try {
+            // TODO: Implementar filtros por fecha y código en el servicio
+            return ResponseEntity.ok(entradaService.obtenerTodasLasEntradas());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(java.util.Map.of("message", "Error al obtener entradas"));
+        }
+    }
+
+    /**
      * HU-01: Descargar comprobante PDF de entrada
      */
     @GetMapping("/{id}/comprobante")

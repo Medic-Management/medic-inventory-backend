@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -27,4 +28,10 @@ public class ProductResponse {
     private String categoryName;
     private String supplierName;
     private String supplierContact;
+
+    // CP021: Campos de bloqueo por retiro sanitario
+    private Boolean bloqueado;
+    private String motivoBloqueo;
+    private LocalDateTime bloqueadoEn;
+    private Integer bloqueadoPor;
 }

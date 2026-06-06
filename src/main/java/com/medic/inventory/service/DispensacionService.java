@@ -45,6 +45,23 @@ public class DispensacionService {
         Lote lote = loteRepository.findById(loteIdFinal)
             .orElseThrow(() -> new RuntimeException("Lote no encontrado"));
 
+        // CP021: Validar que el producto no esté bloqueado por retiro sanitario
+        if (Boolean.TRUE.equals(producto.getBloqueado())) {
+            throw new RuntimeException("PRODUCTO_BLOQUEADO: El producto está bloqueado por retiro sanitario. " +
+                    "Motivo: " + producto.getMotivoBloqueo());
+        }
+
+        // CP021: Validar que el lote no esté bloqueado por retiro sanitario
+        if (Boolean.TRUE.equals(lote.getBloqueado())) {
+            throw new RuntimeException("LOTE_BLOQUEADO: El lote está bloqueado por retiro sanitario. " +
+                    "Motivo: " + lote.getMotivoBloqueo());
+        }
+
+        // HU-21: Validar que el lote esté activo (no bloqueado administrativamente)
+        if (!lote.getEstado()) {
+            throw new RuntimeException("LOTE_INACTIVO: El lote no está disponible para dispensación");
+        }
+
         User usuario = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
@@ -100,6 +117,43 @@ public class DispensacionService {
             response.setOcurrioEn(mov.getOcurrioEn());
             response.setDispensadoPor(mov.getCreadoPor() != null ? mov.getCreadoPor().longValue() : null);
 
+            loteRepository.findById(mov.getLoteId()).ifPresent(lote -> {
+                response.setLoteId(lote.getId());
+                response.setCodigoLote(lote.getCodigoProductoProv());
+
+                if (lote.getProducto() != null) {
+                    response.setProductoId(lote.getProducto().getId());
+                    response.setProductoNombre(lote.getProducto().getNombre());
+                }
+            });
+
+            return response;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * CP023: Obtener todas las dispensaciones (movimientos de salida)
+     */
+    public List<DispensacionResponse> obtenerTodasLasDispensaciones() {
+        List<Movimiento> movimientos = movimientoRepository.findByTipo("SALIDA");
+
+        return movimientos.stream().map(mov -> {
+            DispensacionResponse response = new DispensacionResponse();
+            response.setId(mov.getId());
+            response.setCantidad(mov.getCantidad());
+            response.setMotivo(mov.getMotivo());
+            response.setDocumentoReferencia(mov.getDocRef());
+            response.setOcurrioEn(mov.getOcurrioEn());
+            response.setDispensadoPor(mov.getCreadoPor() != null ? mov.getCreadoPor().longValue() : null);
+
+            // Buscar información del usuario
+            if (mov.getCreadoPor() != null) {
+                userRepository.findById(mov.getCreadoPor().longValue()).ifPresent(user -> {
+                    response.setDispensadoPorNombre(user.getNombreCompleto());
+                });
+            }
+
+            // Buscar información del lote y producto
             loteRepository.findById(mov.getLoteId()).ifPresent(lote -> {
                 response.setLoteId(lote.getId());
                 response.setCodigoLote(lote.getCodigoProductoProv());

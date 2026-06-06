@@ -20,4 +20,10 @@ public class LoteResponse {
     private BigDecimal precioUnitario;
     private Integer cantidadDisponible;  // Para mostrar stock disponible en sede
     private Integer diasHastaVencimiento;  // Para facilitar lógica FEFO en frontend
+
+    // CP021: Campos de bloqueo por retiro sanitario
+    private Boolean bloqueado;
+    private String motivoBloqueo;
+    private LocalDate bloqueadoEn;
+    private Integer bloqueadoPor;
 }

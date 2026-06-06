@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,6 +23,8 @@ public class SugerenciaService {
     private final LoteRepository loteRepository;
     private final UmbralStockRepository umbralStockRepository;
     private final SupplierRepository supplierRepository;
+    private final RestockRequestRepository restockRequestRepository;
+    private final MovimientoRepository movimientoRepository;
 
     /**
      * HU-07 Escenario 1: Obtener sugerencias de pedido basadas en stock y umbrales
@@ -100,7 +104,15 @@ public class SugerenciaService {
                     sugerencia.setProveedorNombre(proveedorPrincipal.getNombre());
                 }
 
-                sugerencias.add(sugerencia);
+                // CP007: Calcular información complementaria para análisis operativo
+                calcularDatosComplementarios(sugerencia, producto.getId(), sede.getId(), stockActual);
+
+                // Solo agregar la sugerencia si NO existe un pedido pendiente para este producto
+                if (!existePedidoPendiente(producto.getId())) {
+                    sugerencias.add(sugerencia);
+                } else {
+                    log.debug("Sugerencia omitida para producto {} - ya existe pedido pendiente", producto.getNombre());
+                }
             }
         }
 
@@ -122,5 +134,82 @@ public class SugerenciaService {
             case "BAJA": return 1;
             default: return 0;
         }
+    }
+
+    /**
+     * Verifica si existe un pedido pendiente para un producto
+     * Estados pendientes: DRAFT, PENDING, SENT
+     */
+    private boolean existePedidoPendiente(Long productoId) {
+        return restockRequestRepository.findAll().stream()
+            .filter(r -> r.getProduct() != null && r.getProduct().getId().equals(productoId))
+            .anyMatch(r -> r.getStatus() == RestockRequest.RestockStatus.DRAFT ||
+                          r.getStatus() == RestockRequest.RestockStatus.PENDING ||
+                          r.getStatus() == RestockRequest.RestockStatus.SENT);
+    }
+
+    /**
+     * CP007: Calcular datos complementarios para análisis operativo de sugerencias
+     */
+    private void calcularDatosComplementarios(SugerenciaPedidoResponse sugerencia, Long productoId, Long sedeId, int stockActual) {
+        // 1. Calcular consumo promedio mensual (últimos 3 meses)
+        LocalDateTime hace3Meses = LocalDateTime.now().minusMonths(3);
+
+        // Primero obtener todos los loteIds del producto
+        List<Long> loteIdsDelProducto = loteRepository.findByProductoId(productoId).stream()
+            .map(Lote::getId)
+            .collect(Collectors.toList());
+
+        // Filtrar movimientos de salida de esos lotes
+        List<Movimiento> movimientosSalida = movimientoRepository.findAll().stream()
+            .filter(m -> m.getTipo().equals("SALIDA"))
+            .filter(m -> m.getLoteId() != null && loteIdsDelProducto.contains(m.getLoteId()))
+            .filter(m -> m.getOcurrioEn() != null && m.getOcurrioEn().isAfter(hace3Meses))
+            .collect(Collectors.toList());
+
+        int totalConsumo = movimientosSalida.stream()
+            .mapToInt(Movimiento::getCantidad)
+            .sum();
+
+        int consumoPromedioMensual = totalConsumo / 3; // Promedio de 3 meses
+        sugerencia.setConsumoPromedioMensual(consumoPromedioMensual);
+
+        // 2. Calcular tendencia (comparar último mes vs promedio de 2 meses anteriores)
+        LocalDateTime haceUnMes = LocalDateTime.now().minusMonths(1);
+        int consumoUltimoMes = movimientosSalida.stream()
+            .filter(m -> m.getOcurrioEn().isAfter(haceUnMes))
+            .mapToInt(Movimiento::getCantidad)
+            .sum();
+
+        int consumo2MesesAnteriores = totalConsumo - consumoUltimoMes;
+        int promedioMesesAnteriores = consumo2MesesAnteriores / 2;
+
+        String tendencia;
+        if (consumoUltimoMes > promedioMesesAnteriores * 1.2) {
+            tendencia = "CRECIENTE";
+        } else if (consumoUltimoMes < promedioMesesAnteriores * 0.8) {
+            tendencia = "DECRECIENTE";
+        } else {
+            tendencia = "ESTABLE";
+        }
+        sugerencia.setTendencia(tendencia);
+
+        // 3. Calcular días para agotamiento
+        int diasParaAgotamiento = 0;
+        if (consumoPromedioMensual > 0) {
+            double consumoDiario = consumoPromedioMensual / 30.0;
+            if (consumoDiario > 0) {
+                diasParaAgotamiento = (int) Math.ceil(stockActual / consumoDiario);
+            }
+        }
+        sugerencia.setDiasParaAgotamiento(diasParaAgotamiento);
+
+        // 4. Calcular fecha estimada de reposición (7 días de lead time por defecto)
+        int leadTimeDias = 7; // Puede venir del proveedor en el futuro
+        LocalDate fechaEstimada = LocalDate.now().plusDays(leadTimeDias);
+        sugerencia.setFechaEstimadaReposicion(fechaEstimada);
+
+        log.debug("Datos complementarios calculados para producto {}: consumo={}/mes, tendencia={}, días agotamiento={}",
+            productoId, consumoPromedioMensual, tendencia, diasParaAgotamiento);
     }
 }

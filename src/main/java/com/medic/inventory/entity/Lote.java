@@ -29,4 +29,17 @@ public class Lote {
 
     @Column(name = "precio_unitario", precision = 10, scale = 2)
     private BigDecimal precioUnitario;
+
+    // CP021: Bloqueo por retiro sanitario
+    @Column(name = "bloqueado")
+    private Boolean bloqueado = false;
+
+    @Column(name = "motivo_bloqueo", length = 255)
+    private String motivoBloqueo;
+
+    @Column(name = "bloqueado_en")
+    private LocalDate bloqueadoEn;
+
+    @Column(name = "bloqueado_por")
+    private Integer bloqueadoPor;
 }

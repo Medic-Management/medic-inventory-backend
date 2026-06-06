@@ -6,6 +6,11 @@ import lombok.Data;
 public class SettingsRequest {
     private String language;
     private String timezone;
+
+    // CP025: Parámetros generales del sistema
+    private String currency;
+    private String supplierEmail;
+
     private String dateFormat;
     private NotificationSettings notifications;
     private InventorySettings inventory;

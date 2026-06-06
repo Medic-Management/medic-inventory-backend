@@ -78,6 +78,15 @@ public class DispensacionController {
         return ResponseEntity.ok(dispensaciones);
     }
 
+    /**
+     * CP023: Listar todas las dispensaciones (para módulo de comprobantes)
+     */
+    @GetMapping
+    public ResponseEntity<List<DispensacionResponse>> obtenerTodasLasDispensaciones() {
+        List<DispensacionResponse> dispensaciones = dispensacionService.obtenerTodasLasDispensaciones();
+        return ResponseEntity.ok(dispensaciones);
+    }
+
     @GetMapping("/{id}/comprobante")
     public ResponseEntity<byte[]> descargarComprobante(@PathVariable Long id) {
         try {

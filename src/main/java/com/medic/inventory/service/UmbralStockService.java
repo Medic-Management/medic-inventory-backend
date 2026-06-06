@@ -35,6 +35,12 @@ public class UmbralStockService {
         return mapToResponse(umbral);
     }
 
+    public UmbralStockResponse getUmbralByProductoAndSede(Long productoId, Long sedeId) {
+        return umbralStockRepository.findBySedeIdAndProductoId(sedeId, productoId)
+            .map(this::mapToResponse)
+            .orElse(null);
+    }
+
     @Transactional
     public UmbralStockResponse createUmbral(UmbralStockRequest request) {
         Sede sede = sedeRepository.findById(request.getSedeId())

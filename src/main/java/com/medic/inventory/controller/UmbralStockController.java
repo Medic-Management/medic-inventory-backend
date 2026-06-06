@@ -31,6 +31,14 @@ public class UmbralStockController {
         return ResponseEntity.ok(umbral);
     }
 
+    @GetMapping("/producto/{productoId}/sede/{sedeId}")
+    public ResponseEntity<UmbralStockResponse> getUmbralByProductoAndSede(
+            @PathVariable Long productoId,
+            @PathVariable Long sedeId) {
+        UmbralStockResponse umbral = umbralStockService.getUmbralByProductoAndSede(productoId, sedeId);
+        return umbral != null ? ResponseEntity.ok(umbral) : ResponseEntity.notFound().build();
+    }
+
     @PostMapping
     public ResponseEntity<UmbralStockResponse> createUmbral(@Valid @RequestBody UmbralStockRequest request) {
         try {

@@ -19,4 +19,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT o FROM Order o WHERE o.status IN ('PENDING', 'CONFIRMED', 'IN_TRANSIT') ORDER BY o.orderDate DESC")
     List<Order> findActiveOrders();
+
+    // CP020: Obtener órdenes aprobadas con fecha de entrega para calendario
+    @Query("SELECT o FROM Order o WHERE o.status IN ('CONFIRMED', 'IN_TRANSIT') AND o.deliveryDate IS NOT NULL ORDER BY o.deliveryDate ASC")
+    List<Order> findOrdersForCalendar();
 }

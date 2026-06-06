@@ -38,6 +38,11 @@ public class OrderService {
         return orderRepository.findActiveOrders();
     }
 
+    // CP020: Obtener órdenes para calendario de recepciones
+    public List<Order> getOrdersForCalendar() {
+        return orderRepository.findOrdersForCalendar();
+    }
+
     @Transactional
     public Order createOrder(Order order) {
         if (order.getOrderNumber() == null || order.getOrderNumber().isEmpty()) {

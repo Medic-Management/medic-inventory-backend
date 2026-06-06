@@ -18,6 +18,13 @@ public class Settings {
 
     private String language = "es";
     private String timezone = "America/Lima";
+
+    // CP025: Parámetros generales del sistema
+    private String currency = "PEN";
+
+    @Column(name = "supplier_email")
+    private String supplierEmail;
+
     private String dateFormat = "dd/mm/yyyy";
 
     private Boolean notifyLowStock = true;

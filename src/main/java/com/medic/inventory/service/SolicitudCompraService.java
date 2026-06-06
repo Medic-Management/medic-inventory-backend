@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +23,7 @@ public class SolicitudCompraService {
     private final UserRepository userRepository;
     private final SedeRepository sedeRepository;
     private final UmbralStockRepository umbralStockRepository;
+    private final TrabajoRpaRepository trabajoRpaRepository;
 
     @Transactional
     public SolicitudCompraResponse crearSolicitud(SolicitudCompraRequest request, Long userId) {
@@ -157,6 +160,16 @@ public class SolicitudCompraService {
 
     public List<SolicitudCompraResponse> obtenerSolicitudes() {
         return restockRequestRepository.findAll().stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+
+    // CP011: Obtener pedidos aprobados para autorrellenar entradas
+    public List<SolicitudCompraResponse> obtenerPedidosAprobados() {
+        return restockRequestRepository.findAll().stream()
+            .filter(r -> r.getStatus() == RestockRequest.RestockStatus.SENT ||
+                        r.getStatus() == RestockRequest.RestockStatus.CONFIRMED ||
+                        r.getStatus() == RestockRequest.RestockStatus.IN_TRANSIT)
             .map(this::mapToResponse)
             .collect(Collectors.toList());
     }
@@ -320,5 +333,113 @@ public class SolicitudCompraService {
         response.setCreadaEn(solicitud.getCreadaEn());
 
         return response;
+    }
+
+    // CP010: Confirmar acuse de recibo (cambiar estado SENT → CONFIRMED)
+    @Transactional
+    public SolicitudCompraResponse confirmarAcuseRecibo(Long solicitudId, Long userId) {
+        RestockRequest solicitud = restockRequestRepository.findById(solicitudId)
+            .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+
+        // Validar que esté en estado SENT
+        if (solicitud.getStatus() != RestockRequest.RestockStatus.SENT) {
+            throw new RuntimeException("Solo se pueden confirmar solicitudes en estado ENVIADO");
+        }
+
+        // Cambiar estado a CONFIRMED
+        solicitud.setStatus(RestockRequest.RestockStatus.CONFIRMED);
+
+        // Registrar quién confirmó (opcional: agregar campo fecha_confirmacion si no existe)
+        solicitud = restockRequestRepository.save(solicitud);
+
+        return mapToResponse(solicitud);
+    }
+
+    // CP010: Obtener solicitudes sin confirmar (SENT > 48 horas)
+    @Transactional(readOnly = true)
+    public List<SolicitudCompraResponse> obtenerSolicitudesSinConfirmar() {
+        LocalDateTime hace48Horas = LocalDateTime.now().minusHours(48);
+
+        return restockRequestRepository.findAll().stream()
+            .filter(s -> s.getStatus() == RestockRequest.RestockStatus.SENT)
+            .filter(s -> s.getRequestDate() != null && s.getRequestDate().isBefore(hace48Horas))
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+
+    // CP010: Obtener todas las solicitudes SENT (para mostrar botón de confirmar)
+    @Transactional(readOnly = true)
+    public List<SolicitudCompraResponse> obtenerSolicitudesEnviadas() {
+        return restockRequestRepository.findAll().stream()
+            .filter(s -> s.getStatus() == RestockRequest.RestockStatus.SENT)
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+
+    // CP009: Obtener solicitudes PENDING (aprobadas pendientes de envío)
+    @Transactional(readOnly = true)
+    public List<SolicitudCompraResponse> obtenerSolicitudesAprobadas() {
+        return restockRequestRepository.findAll().stream()
+            .filter(s -> s.getStatus() == RestockRequest.RestockStatus.PENDING)
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+
+    // CP009: Enviar pedido al proveedor mediante RPA
+    @Transactional
+    public SolicitudCompraResponse enviarAlProveedor(Long solicitudId, Long userId) {
+        RestockRequest solicitud = restockRequestRepository.findById(solicitudId)
+            .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+
+        // Validar que esté en estado PENDING (aprobado pendiente de envío)
+        if (solicitud.getStatus() != RestockRequest.RestockStatus.PENDING) {
+            throw new RuntimeException("Solo se pueden enviar solicitudes en estado PENDING");
+        }
+
+        // Cambiar estado a SENT
+        solicitud.setStatus(RestockRequest.RestockStatus.SENT);
+        solicitud.setEmailSent(false);
+        solicitud = restockRequestRepository.save(solicitud);
+
+        // Crear trabajo RPA para que UiPath procese el envío
+        TrabajoRpa trabajoRpa = new TrabajoRpa();
+        trabajoRpa.setSolicitudId(solicitud.getId());
+        trabajoRpa.setEstado("PENDING");
+        trabajoRpa.setSolicitadoEn(LocalDateTime.now());
+        trabajoRpaRepository.save(trabajoRpa);
+
+        return mapToResponse(solicitud);
+    }
+
+    // CP009: Enviar TODAS las solicitudes aprobadas al proveedor
+    @Transactional
+    public int enviarTodasAlProveedor(Long userId) {
+        List<RestockRequest> solicitudesAprobadas = restockRequestRepository.findAll().stream()
+            .filter(s -> s.getStatus() == RestockRequest.RestockStatus.PENDING)
+            .collect(Collectors.toList());
+
+        int enviadas = 0;
+        for (RestockRequest solicitud : solicitudesAprobadas) {
+            try {
+                // Cambiar estado a SENT
+                solicitud.setStatus(RestockRequest.RestockStatus.SENT);
+                solicitud.setEmailSent(false);
+                restockRequestRepository.save(solicitud);
+
+                // Crear trabajo RPA
+                TrabajoRpa trabajoRpa = new TrabajoRpa();
+                trabajoRpa.setSolicitudId(solicitud.getId());
+                trabajoRpa.setEstado("PENDING");
+                trabajoRpa.setSolicitadoEn(LocalDateTime.now());
+                trabajoRpaRepository.save(trabajoRpa);
+
+                enviadas++;
+            } catch (Exception e) {
+                // Log y continuar con las demás
+                System.err.println("Error enviando solicitud " + solicitud.getId() + ": " + e.getMessage());
+            }
+        }
+
+        return enviadas;
     }
 }

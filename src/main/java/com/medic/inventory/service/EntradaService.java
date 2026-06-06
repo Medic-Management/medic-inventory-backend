@@ -137,6 +137,46 @@ public class EntradaService {
     }
 
     /**
+     * CP023: Obtener todas las entradas (movimientos de entrada)
+     */
+    @Transactional(readOnly = true)
+    public java.util.List<EntradaResponse> obtenerTodasLasEntradas() {
+        java.util.List<Movimiento> movimientos = movimientoRepository.findByTipo("ENTRADA");
+
+        return movimientos.stream().map(mov -> {
+            EntradaResponse response = new EntradaResponse();
+            response.setId(mov.getId());
+            response.setCantidad(mov.getCantidad());
+            response.setDocumentoReferencia(mov.getDocRef());
+            response.setOcurrioEn(mov.getOcurrioEn());
+            response.setRegistradoPor(mov.getCreadoPor() != null ? mov.getCreadoPor().longValue() : null);
+
+            // Buscar usuario que creó la entrada
+            if (mov.getCreadoPor() != null) {
+                userRepository.findById(mov.getCreadoPor().longValue()).ifPresent(user -> {
+                    response.setRegistradoPorNombre(user.getNombreCompleto());
+                });
+            }
+
+            // Buscar información del lote y producto
+            loteRepository.findById(mov.getLoteId()).ifPresent(lote -> {
+                response.setLoteId(lote.getId());
+                response.setCodigoLote(lote.getCodigoProductoProv());
+
+                if (lote.getProducto() != null) {
+                    response.setProductoId(lote.getProducto().getId());
+                    response.setProductoNombre(lote.getProducto().getNombre());
+                }
+            });
+
+            // Proveedor: Por ahora "Sin especificar"
+            response.setProveedorNombre("Sin especificar");
+
+            return response;
+        }).collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
      * HU-01: Obtener entrada por ID para generación de PDF
      */
     @Transactional(readOnly = true)

@@ -27,7 +27,7 @@ public class AlertaCoberturaController {
      * @return Lista de alertas de cobertura baja activas
      */
     @GetMapping("/activas")
-    @PreAuthorize("hasAnyRole('ROLE_ADMINISTRADOR', 'ROLE_JEFE_FARMACIA', 'ROLE_FARMACEUTICO')")
+    @PreAuthorize("hasAnyRole('Administrador', 'JefedeFarmacia', 'Farmaceutico')")
     public ResponseEntity<List<AlertaResponse>> obtenerAlertasCoberturaActivas() {
         try {
             List<AlertaResponse> alertas = alertaCoberturaService.obtenerAlertasCoberturaActivas();
@@ -42,7 +42,7 @@ public class AlertaCoberturaController {
      * @return Lista de alertas generadas en esta ejecución
      */
     @PostMapping("/verificar")
-    @PreAuthorize("hasAnyRole('ROLE_ADMINISTRADOR', 'ROLE_JEFE_FARMACIA')")
+    @PreAuthorize("hasAnyRole('Administrador', 'JefedeFarmacia')")
     public ResponseEntity<List<AlertaResponse>> verificarCoberturaYGenerarAlertas() {
         try {
             List<AlertaResponse> alertasGeneradas = alertaCoberturaService.verificarCoberturaYGenerarAlertas();
@@ -57,7 +57,7 @@ public class AlertaCoberturaController {
      * @return Información resumida de las alertas de cobertura
      */
     @GetMapping("/resumen")
-    @PreAuthorize("hasAnyRole('ROLE_ADMINISTRADOR', 'ROLE_JEFE_FARMACIA', 'ROLE_FARMACEUTICO')")
+    @PreAuthorize("hasAnyRole('Administrador', 'JefedeFarmacia', 'Farmaceutico')")
     public ResponseEntity<?> obtenerResumenCobertura() {
         try {
             List<AlertaResponse> alertas = alertaCoberturaService.obtenerAlertasCoberturaActivas();

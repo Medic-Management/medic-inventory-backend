@@ -29,6 +29,14 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long> {
 
     List<Alerta> findByTipoAndActivaOrderByNivelDesc(String tipo, Integer activa);
 
+    // Alertas activas de un producto excluyendo un tipo (para no pisar COBERTURA_BAJA
+    // desde la verificación de stock, que opera sobre umbral mínimo y no sobre cobertura)
+    @Query("SELECT (COUNT(a) > 0) FROM Alerta a WHERE a.sede.id = :sedeId AND a.producto.id = :productoId AND a.activa = :activa AND a.tipo <> :tipoExcluido")
+    boolean existsBySedeIdAndProductoIdAndActivaAndTipoNot(Long sedeId, Long productoId, Integer activa, String tipoExcluido);
+
+    @Query("SELECT a FROM Alerta a WHERE a.sede.id = :sedeId AND a.producto.id = :productoId AND a.activa = :activa AND a.tipo <> :tipoExcluido")
+    List<Alerta> findBySedeIdAndProductoIdAndActivaAndTipoNot(Long sedeId, Long productoId, Integer activa, String tipoExcluido);
+
     // HU-03 Escenario 2: Reporte consolidado de alertas por rango de fechas
     List<Alerta> findByDisparadaEnBetween(java.time.LocalDateTime desde, java.time.LocalDateTime hasta);
 }

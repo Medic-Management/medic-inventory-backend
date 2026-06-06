@@ -1,5 +1,6 @@
 package com.medic.inventory.service;
 
+import com.medic.inventory.dto.BloqueoRequest;
 import com.medic.inventory.dto.ProductRequest;
 import com.medic.inventory.dto.ProductResponse;
 import com.medic.inventory.dto.ProductWithInventoryDTO;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -160,6 +162,12 @@ public class ProductService {
             response.setSupplierContact(product.getSupplier().getContactNumber());
         }
 
+        // CP021: Mapear campos de bloqueo
+        response.setBloqueado(product.getBloqueado());
+        response.setMotivoBloqueo(product.getMotivoBloqueo());
+        response.setBloqueadoEn(product.getBloqueadoEn());
+        response.setBloqueadoPor(product.getBloqueadoPor());
+
         return response;
     }
 
@@ -177,13 +185,18 @@ public class ProductService {
                 "MIN(l.codigo_producto_prov) as loteNumero, " +
                 "p.requiere_refrigeracion, " +
                 "p.controlado, " +
-                "COALESCE(u.punto_pedido, 50) as puntoPedido " +
+                "COALESCE(u.punto_pedido, 50) as puntoPedido, " +
+                "p.bloqueado, " +
+                "p.motivo_bloqueo, " +
+                "p.bloqueado_en, " +
+                "p.bloqueado_por " +
                 "FROM PRODUCTOS p " +
                 "LEFT JOIN CATEGORIAS c ON p.categoria_id = c.id " +
                 "LEFT JOIN LOTES l ON l.producto_id = p.id " +
                 "LEFT JOIN INVENTARIO i ON i.lote_id = l.id " +
                 "LEFT JOIN UMBRAL_STOCK u ON u.producto_id = p.id AND u.sede_id = 1 " +
-                "GROUP BY p.id, p.codigo, p.nombre, c.nombre, u.minimo, u.punto_pedido, p.requiere_refrigeracion, p.controlado " +
+                "GROUP BY p.id, p.codigo, p.nombre, c.nombre, u.minimo, u.punto_pedido, p.requiere_refrigeracion, p.controlado, " +
+                "p.bloqueado, p.motivo_bloqueo, p.bloqueado_en, p.bloqueado_por " +
                 "ORDER BY p.id";
 
         Query query = entityManager.createNativeQuery(sql);
@@ -203,6 +216,20 @@ public class ProductService {
             dto.setLoteNumero((String) row[8]);
             dto.setRequiereRefrigeracion(row[9] != null && ((Number) row[9]).intValue() == 1);
             dto.setControlado(row[10] != null && ((Number) row[10]).intValue() == 1);
+
+            // CP021: Mapear campos de bloqueo
+            if (row[12] instanceof Boolean) {
+                dto.setBloqueado((Boolean) row[12]);
+            } else if (row[12] instanceof Number) {
+                dto.setBloqueado(((Number) row[12]).intValue() == 1);
+            } else {
+                dto.setBloqueado(false);
+            }
+            dto.setMotivoBloqueo((String) row[13]);
+            if (row[14] != null) {
+                dto.setBloqueadoEn(LocalDateTime.parse(row[14].toString().replace(" ", "T")));
+            }
+            dto.setBloqueadoPor(row[15] != null ? ((Number) row[15]).intValue() : null);
 
             int cantidad = dto.getCantidad();
             int minimo = dto.getAlertValue();
@@ -254,5 +281,51 @@ public class ProductService {
         }
 
         return lotes;
+    }
+
+    /**
+     * CP021: Bloquear un producto por retiro sanitario
+     */
+    @Transactional
+    public ProductResponse bloquearProducto(Long id, BloqueoRequest request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        if (Boolean.TRUE.equals(product.getBloqueado())) {
+            throw new RuntimeException("El producto ya está bloqueado");
+        }
+
+        if (request.getMotivoBloqueo() == null || request.getMotivoBloqueo().trim().isEmpty()) {
+            throw new RuntimeException("Debe especificar un motivo de bloqueo");
+        }
+
+        product.setBloqueado(true);
+        product.setMotivoBloqueo(request.getMotivoBloqueo());
+        product.setBloqueadoEn(LocalDateTime.now());
+        product.setBloqueadoPor(request.getUsuarioId());
+
+        Product savedProduct = productRepository.save(product);
+        return convertToResponse(savedProduct);
+    }
+
+    /**
+     * CP021: Desbloquear un producto
+     */
+    @Transactional
+    public ProductResponse desbloquearProducto(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        if (!Boolean.TRUE.equals(product.getBloqueado())) {
+            throw new RuntimeException("El producto no está bloqueado");
+        }
+
+        product.setBloqueado(false);
+        product.setMotivoBloqueo(null);
+        product.setBloqueadoEn(null);
+        product.setBloqueadoPor(null);
+
+        Product savedProduct = productRepository.save(product);
+        return convertToResponse(savedProduct);
     }
 }

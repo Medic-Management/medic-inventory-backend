@@ -35,8 +35,12 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/api/alertas-cobertura/**", "/api/productos/**",
-                                 "/api/alertas/**", "/api/alertas-vencimiento/**", "/api/reportes/**",
-                                 "/api/ml-predictions/**").permitAll()
+                                 "/api/products/**", "/api/lotes/**", "/api/alertas/**",
+                                 "/api/alertas-vencimiento/**", "/api/reportes/**", "/api/ml-predictions/**",
+                                 "/api/suppliers/**", "/api/users/**", "/api/settings/**", "/api/dashboard/**",
+                                 "/api/dispensaciones/**", "/api/entradas/**", "/api/sugerencias/**",
+                                 "/api/solicitudes-compra/**", "/api/uipath/**", "/api/umbrales/**",
+                                 "/api/restock/**", "/api/orders/**", "/api/ml/**", "/api/audit-logs/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -48,10 +52,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://localhost:4300", "https://medic-inventory-peru.netlify.app"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(false);
+        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
