@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/audit-logs")
 @RequiredArgsConstructor
 @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:4300"})
-@PreAuthorize("hasAuthority('Administrador')")
+@PreAuthorize("hasAnyRole('Administrador', 'JefedeFarmacia')")
 public class AuditLogController {
 
     private final AuditLogService auditLogService;
