@@ -43,30 +43,35 @@ public class UserManagementController {
             @Valid @RequestBody UserRequest request,
             Authentication authentication,
             HttpServletRequest httpRequest) {
+        UserResponse user;
         try {
-            UserResponse user = userManagementService.createUser(request);
-
-            String email = authentication.getName();
-            User currentUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-            String ipAddress = getClientIpAddress(httpRequest);
-            auditLogService.logAction(
-                currentUser.getId(),
-                currentUser.getNombreCompleto(),
-                "USUARIO_CREADO",
-                "Usuario",
-                user.getId(),
-                String.format("Usuario creado: %s (%s)", user.getNombreCompleto(), user.getEmail()),
-                ipAddress
-            );
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(user);
+            user = userManagementService.createUser(request);
         } catch (RuntimeException e) {
             // HU-15: Retornar mensaje específico de error (ej: email duplicado)
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(java.util.Map.of("message", e.getMessage()));
         }
+
+        // CP15: la auditoría NO debe afectar el resultado de la creación del usuario
+        try {
+            String email = authentication != null ? authentication.getName() : null;
+            if (email != null) {
+                userRepository.findByEmail(email).ifPresent(currentUser ->
+                    auditLogService.logAction(
+                        currentUser.getId(),
+                        currentUser.getNombreCompleto(),
+                        "USUARIO_CREADO",
+                        "Usuario",
+                        user.getId(),
+                        String.format("Usuario creado: %s (%s)", user.getNombreCompleto(), user.getEmail()),
+                        getClientIpAddress(httpRequest)
+                    ));
+            }
+        } catch (Exception ignore) {
+            // un fallo de auditoría no debe romper la creación ya realizada
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
     @PutMapping("/{id}")
@@ -75,28 +80,32 @@ public class UserManagementController {
             @Valid @RequestBody UserRequest request,
             Authentication authentication,
             HttpServletRequest httpRequest) {
+        UserResponse user;
         try {
-            UserResponse user = userManagementService.updateUser(id, request);
-
-            String email = authentication.getName();
-            User currentUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-            String ipAddress = getClientIpAddress(httpRequest);
-            auditLogService.logAction(
-                currentUser.getId(),
-                currentUser.getNombreCompleto(),
-                "USUARIO_ACTUALIZADO",
-                "Usuario",
-                user.getId(),
-                String.format("Usuario actualizado: %s", user.getNombreCompleto()),
-                ipAddress
-            );
-
-            return ResponseEntity.ok(user);
+            user = userManagementService.updateUser(id, request);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
         }
+
+        // CP15: la auditoría no debe afectar el resultado de la actualización
+        try {
+            String email = authentication != null ? authentication.getName() : null;
+            if (email != null) {
+                final UserResponse u = user;
+                userRepository.findByEmail(email).ifPresent(currentUser ->
+                    auditLogService.logAction(
+                        currentUser.getId(),
+                        currentUser.getNombreCompleto(),
+                        "USUARIO_ACTUALIZADO",
+                        "Usuario",
+                        u.getId(),
+                        String.format("Usuario actualizado: %s", u.getNombreCompleto()),
+                        getClientIpAddress(httpRequest)
+                    ));
+            }
+        } catch (Exception ignore) { }
+
+        return ResponseEntity.ok(user);
     }
 
     @PutMapping("/{id}/toggle-status")
@@ -104,26 +113,10 @@ public class UserManagementController {
             @PathVariable Long id,
             Authentication authentication,
             HttpServletRequest httpRequest) {
+        UserResponse user;
         try {
-            UserResponse user = userManagementService.getUserById(id);
+            user = userManagementService.getUserById(id);
             userManagementService.toggleUserStatus(id);
-
-            String email = authentication.getName();
-            User currentUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-            String ipAddress = getClientIpAddress(httpRequest);
-            auditLogService.logAction(
-                currentUser.getId(),
-                currentUser.getNombreCompleto(),
-                "USUARIO_ESTADO_CAMBIADO",
-                "Usuario",
-                id,
-                String.format("Estado de usuario cambiado: %s", user.getNombreCompleto()),
-                ipAddress
-            );
-
-            return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
             // HU-13 Escenario 2: Retornar mensaje específico si es el último administrador
             if (e.getMessage().contains("ULTIMO_ADMINISTRADOR")) {
@@ -133,6 +126,26 @@ public class UserManagementController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(java.util.Map.of("message", e.getMessage()));
         }
+
+        // CP15: la auditoría no debe afectar el resultado del cambio de estado
+        try {
+            String email = authentication != null ? authentication.getName() : null;
+            if (email != null) {
+                final UserResponse u = user;
+                userRepository.findByEmail(email).ifPresent(currentUser ->
+                    auditLogService.logAction(
+                        currentUser.getId(),
+                        currentUser.getNombreCompleto(),
+                        "USUARIO_ESTADO_CAMBIADO",
+                        "Usuario",
+                        id,
+                        String.format("Estado de usuario cambiado: %s", u.getNombreCompleto()),
+                        getClientIpAddress(httpRequest)
+                    ));
+            }
+        } catch (Exception ignore) { }
+
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/roles")
