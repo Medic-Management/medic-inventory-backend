@@ -204,8 +204,15 @@ public class SugerenciaService {
         }
         sugerencia.setDiasParaAgotamiento(diasParaAgotamiento);
 
-        // 4. Calcular fecha estimada de reposición (7 días de lead time por defecto)
-        int leadTimeDias = 7; // Puede venir del proveedor en el futuro
+        // 4. Fecha estimada de reposición usando el lead time real del proveedor (HU-02 Esc.3)
+        int leadTimeDias = 7; // por defecto si el proveedor no lo tiene configurado
+        if (sugerencia.getProveedorId() != null) {
+            Integer lt = supplierRepository.findById(sugerencia.getProveedorId())
+                .map(Supplier::getLeadTimeDays).orElse(null);
+            if (lt != null && lt > 0) {
+                leadTimeDias = lt;
+            }
+        }
         LocalDate fechaEstimada = LocalDate.now().plusDays(leadTimeDias);
         sugerencia.setFechaEstimadaReposicion(fechaEstimada);
 
