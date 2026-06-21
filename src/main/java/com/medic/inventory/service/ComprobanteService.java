@@ -58,19 +58,19 @@ public class ComprobanteService {
             table.addCell(String.valueOf(dispensacionId));
 
             table.addCell("Fecha:");
-            table.addCell(fecha.format(DATE_FORMATTER));
+            table.addCell(fecha != null ? fecha.format(DATE_FORMATTER) : "-");
 
             table.addCell("Producto:");
-            table.addCell(productoNombre);
+            table.addCell(productoNombre != null ? productoNombre : "-");
 
             table.addCell("Cantidad:");
-            table.addCell(cantidad + " unidades");
+            table.addCell((cantidad != null ? cantidad : 0) + " unidades");
 
             table.addCell("Lote:");
-            table.addCell(loteNumero);
+            table.addCell(loteNumero != null ? loteNumero : "-");
 
             table.addCell("Dispensado por:");
-            table.addCell(usuarioNombre);
+            table.addCell(usuarioNombre != null ? usuarioNombre : "-");
 
             document.add(table);
 
@@ -126,19 +126,19 @@ public class ComprobanteService {
             table.addCell(String.valueOf(entradaId));
 
             table.addCell("Fecha:");
-            table.addCell(fecha.format(DATE_FORMATTER));
+            table.addCell(fecha != null ? fecha.format(DATE_FORMATTER) : "-");
 
             table.addCell("Producto:");
-            table.addCell(productoNombre);
+            table.addCell(productoNombre != null ? productoNombre : "-");
 
             table.addCell("Cantidad:");
-            table.addCell(cantidad + " unidades");
+            table.addCell((cantidad != null ? cantidad : 0) + " unidades");
 
             table.addCell("Proveedor:");
-            table.addCell(proveedorNombre);
+            table.addCell(proveedorNombre != null ? proveedorNombre : "-");
 
             table.addCell("Registrado por:");
-            table.addCell(usuarioNombre);
+            table.addCell(usuarioNombre != null ? usuarioNombre : "-");
 
             document.add(table);
 
