@@ -32,6 +32,7 @@ public class ProductService {
     private final EntityManager entityManager;
     private final com.medic.inventory.repository.LoteRepository loteRepository;
     private final com.medic.inventory.repository.MovimientoRepository movimientoRepository;
+    private final com.medic.inventory.repository.InventarioRepository inventarioRepository;
 
     @Transactional(readOnly = true)
     public List<ProductResponse> getAllProducts() {
@@ -81,19 +82,21 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
-        // Verificar si tiene lotes asociados
-        long lotesCount = loteRepository.findByProductoId(id).size();
-        if (lotesCount > 0) {
-            throw new RuntimeException("PRODUCTO_EN_USO: El medicamento tiene " + lotesCount + " lote(s) asociado(s) y no se puede eliminar. Debe procesar todos los lotes primero.");
-        }
-
-        // Verificar si tiene movimientos asociados (a través de lotes)
+        // HU-14: solo se bloquea si el medicamento tiene MOVIMIENTOS vigentes.
+        // Tener lotes "vacíos" (sin movimientos) no debe impedir la eliminación.
         List<com.medic.inventory.entity.Lote> lotes = loteRepository.findByProductoId(id);
         for (com.medic.inventory.entity.Lote lote : lotes) {
             long movimientosCount = movimientoRepository.findByLoteId(lote.getId()).size();
             if (movimientosCount > 0) {
                 throw new RuntimeException("PRODUCTO_EN_USO: El medicamento tiene movimientos de inventario asociados y no se puede eliminar.");
             }
+        }
+
+        // Sin movimientos: eliminar inventario y lotes vacíos para no dejar huérfanos
+        for (com.medic.inventory.entity.Lote lote : lotes) {
+            inventarioRepository.findByLoteId(lote.getId())
+                .forEach(inventarioRepository::delete);
+            loteRepository.deleteById(lote.getId());
         }
 
         productRepository.deleteById(id);
