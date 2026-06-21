@@ -1,0 +1,62 @@
+==========================================================
+ HTTPS PARA EL BACKEND (VM Windows) - certificado autofirmado
+==========================================================
+
+El backend ahora corre en HTTPS en el puerto 8443. Necesita un
+"keystore" (certificado) que se genera UNA sola vez en la VM.
+
+----------------------------------------------------------
+PASO 1 — Generar el keystore con keytool (viene con el JDK)
+----------------------------------------------------------
+Abre CMD en la VM y ejecuta (en UNA sola linea):
+
+keytool -genkeypair -alias medic -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore keystore.p12 -validity 3650 -storepass medic2025 -dname "CN=172.200.21.101, OU=Medic, O=Medic, L=Lima, S=Lima, C=PE" -ext SAN=ip:172.200.21.101
+
+  - Si "keytool" no se reconoce, usa la ruta completa del JDK, por ejemplo:
+    "C:\Program Files\Java\jdk-17\bin\keytool.exe" -genkeypair ... (resto igual)
+    (Busca tu JDK con:  where java   o   dir /s /b C:\keytool.exe )
+
+  - La contraseña DEBE ser  medic2025  (coincide con application.properties).
+
+Esto crea el archivo  keystore.p12  en la carpeta donde estes parado.
+
+----------------------------------------------------------
+PASO 2 — Copiar el keystore donde Spring lo lee
+----------------------------------------------------------
+Copia keystore.p12 a la carpeta de recursos del backend:
+
+copy keystore.p12 C:\medic-inventory-backend\src\main\resources\keystore.p12
+
+(application.properties lo carga como  classpath:keystore.p12 )
+
+----------------------------------------------------------
+PASO 3 — Abrir el puerto 8443 en el Firewall de Windows
+----------------------------------------------------------
+netsh advfirewall firewall add rule name="Medic Backend HTTPS 8443" dir=in action=allow protocol=TCP localport=8443
+
+  IMPORTANTE: en Azure, abre tambien el puerto 8443 en el
+  "Grupo de seguridad de red" (NSG) de la VM, regla de entrada TCP 8443.
+
+----------------------------------------------------------
+PASO 4 — Reiniciar el backend
+----------------------------------------------------------
+cd C:\medic-inventory-backend
+mvn clean spring-boot:run
+
+Debe arrancar en el puerto 8443 (HTTPS). Veras:
+  Tomcat started on port 8443 (https)
+
+----------------------------------------------------------
+PASO 5 — Aceptar el certificado en el navegador (una vez)
+----------------------------------------------------------
+Como el certificado es autofirmado, el navegador no confia por
+defecto. Antes de usar la app:
+
+1. Abre en el navegador:  https://172.200.21.101:8443/api/auth/login
+2. Veras "Tu conexion no es privada" -> Avanzado -> Continuar a 172.200.21.101
+   (Esto le dice al navegador que confie en el certificado.)
+3. Ahora abre la app de Netlify normalmente y entra. Ya conectara.
+
+  NOTA: cada equipo/navegador que use la app debe hacer el paso 5 una vez.
+
+==========================================================
