@@ -78,7 +78,7 @@ CREATE TABLE `audit_logs` (
   `usuario_id` bigint DEFAULT NULL,
   `usuario_nombre` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -87,7 +87,7 @@ CREATE TABLE `audit_logs` (
 
 LOCK TABLES `audit_logs` WRITE;
 /*!40000 ALTER TABLE `audit_logs` DISABLE KEYS */;
-INSERT INTO `audit_logs` VALUES (1,'USUARIO_CREADO','Usuario creado: Franco (francos@gmail.com)',6,'Usuario','2026-06-01 23:02:56.886465','0:0:0:0:0:0:0:1',5,'Dr. Luis Martínez - Jefe de Farmacia');
+INSERT INTO `audit_logs` VALUES (1,'USUARIO_CREADO','Usuario creado: Franco (francos@gmail.com)',6,'Usuario','2026-06-01 23:02:56.886465','0:0:0:0:0:0:0:1',5,'Dr. Luis Martínez - Jefe de Farmacia'),(2,'DISPENSACION_CREADA','Dispensación de 10 unidades de Paracetamol 500mg',533,'Dispensacion','2026-06-21 07:21:00.000000','127.0.0.1',3,'Dra. Ana Torres'),(3,'LOTE_BLOQUEADO','Bloqueo de lote AZIT-001 - Motivo: Retiro sanitario DIGEMID',9,'Lote','2026-06-20 10:15:00.000000','127.0.0.1',5,'Dr. Luis Martínez - Jefe de Farmacia'),(4,'SOLICITUD_APROBADA','Aprobación de la solicitud #26',26,'SolicitudCompra','2026-06-20 11:30:00.000000','127.0.0.1',5,'Dr. Luis Martínez - Jefe de Farmacia'),(5,'USUARIO_CREADO','Creación del usuario francos@gmail.com',6,'Usuario','2026-06-19 16:45:00.000000','127.0.0.1',1,'Admin Sistema'),(6,'LOTE_DESBLOQUEADO','Desbloqueo de lote SALB-001 - Motivo: Levantamiento de alerta sanitaria',18,'Lote','2026-06-21 07:05:00.000000','127.0.0.1',5,'Dr. Luis Martínez - Jefe de Farmacia');
 /*!40000 ALTER TABLE `audit_logs` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -116,7 +116,7 @@ CREATE TABLE `categorias` (
 
 LOCK TABLES `categorias` WRITE;
 /*!40000 ALTER TABLE `categorias` DISABLE KEYS */;
-INSERT INTO `categorias` VALUES (1,NULL,NULL,NULL,NULL,'Analg├®sicos'),(2,NULL,NULL,NULL,NULL,'Antibi├│ticos'),(3,NULL,NULL,NULL,NULL,'Antiinflamatorios'),(4,NULL,NULL,NULL,NULL,'Vitaminas'),(5,NULL,NULL,NULL,NULL,'Inhaladores'),(6,NULL,NULL,NULL,NULL,'Antihipertensivos'),(7,NULL,NULL,NULL,NULL,'Anti├ícidos'),(8,NULL,NULL,NULL,NULL,'Antihistam├¡nicos'),(9,NULL,NULL,NULL,NULL,'Antipir├®ticos'),(10,NULL,NULL,NULL,NULL,'Antimic├│ticos');
+INSERT INTO `categorias` VALUES (1,NULL,NULL,NULL,NULL,'Analgésicos'),(2,NULL,NULL,NULL,NULL,'Antibióticos'),(3,NULL,NULL,NULL,NULL,'Antiinflamatorios'),(4,NULL,NULL,NULL,NULL,'Vitaminas'),(5,NULL,NULL,NULL,NULL,'Inhaladores'),(6,NULL,NULL,NULL,NULL,'Antihipertensivos'),(7,NULL,NULL,NULL,NULL,'Antiácidos'),(8,NULL,NULL,NULL,NULL,'Antihistamínicos'),(9,NULL,NULL,NULL,NULL,'Antipiréticos'),(10,NULL,NULL,NULL,NULL,'Antimicóticos');
 /*!40000 ALTER TABLE `categorias` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -317,7 +317,7 @@ CREATE TABLE `productos` (
 
 LOCK TABLES `productos` WRITE;
 /*!40000 ALTER TABLE `productos` DISABLE KEYS */;
-INSERT INTO `productos` VALUES (1,'',0,NULL,'Paracetamol 500mg','',0,1,2,5.00,_binary '\0',NULL,NULL,NULL),(2,'',0,NULL,'Amoxicilina 500 mg','',0,2,2,8.50,_binary '\0',NULL,NULL,NULL),(3,'MED-003',0,NULL,'Ibuprofeno 400 mg',NULL,0,3,2,12.75,_binary '\0',NULL,NULL,NULL),(4,'MED-004',0,NULL,'Salbutamol Inhalador',NULL,0,5,1,15.50,_binary '\0',NULL,NULL,NULL),(5,'MED-005',0,NULL,'Losart├ín 50 mg',NULL,0,6,2,18.90,_binary '\0',NULL,NULL,NULL),(6,'MED-006',0,NULL,'Vitamina C 1000mg',NULL,0,4,2,22.00,_binary '\0',NULL,NULL,NULL),(7,'MED-007',0,NULL,'Omeprazol 20mg',NULL,0,7,2,28.50,_binary '\0',NULL,NULL,NULL),(8,'MED-008',0,NULL,'Loratadina 10mg',NULL,0,8,2,32.75,_binary '\0',NULL,NULL,NULL),(9,'MED-009',0,NULL,'Azitromicina 500mg',NULL,0,2,2,38.00,_binary '','123','2026-06-02 22:25:18',1),(10,'MED-010',0,NULL,'Metformina 850mg',NULL,0,1,2,45.50,_binary '\0',NULL,NULL,NULL),(11,'MED-011',0,NULL,'Atorvastatina 20mg',NULL,0,6,2,5.00,_binary '\0',NULL,NULL,NULL),(12,'MED-012',0,NULL,'Diclofenaco 50mg',NULL,0,3,2,22.00,_binary '\0',NULL,NULL,NULL),(13,'MED-013',1,NULL,'Clonazepam 2mg',NULL,0,1,2,5.00,_binary '\0',NULL,NULL,NULL),(14,'MED-014',0,NULL,'Fluconazol 150mg',NULL,0,10,1,28.50,_binary '\0',NULL,NULL,NULL),(15,'MED-015',0,NULL,'Acetilciste├¡na 600mg',NULL,0,1,7,18.90,_binary '\0',NULL,NULL,NULL),(16,'MED-016',0,NULL,'Dexametasona 4mg',NULL,0,3,1,32.75,_binary '\0',NULL,NULL,NULL),(17,'MED-017',0,NULL,'Cetirizina 10mg',NULL,0,8,2,5.00,_binary '\0',NULL,NULL,NULL),(18,'MED-018',0,NULL,'Furosemida 40mg',NULL,0,6,2,38.00,_binary '\0',NULL,NULL,NULL),(19,'MED-019',0,NULL,'Ketoprofeno Gel',NULL,0,3,8,5.00,_binary '\0',NULL,NULL,NULL),(20,'MED-020',0,NULL,'Complejo B Inyectable',NULL,1,4,6,45.50,_binary '\0',NULL,NULL,NULL),(21,'MED-021',0,NULL,'Ciprofloxacino 500mg',NULL,0,2,2,28.50,_binary '\0',NULL,NULL,NULL),(22,'MED-022',0,NULL,'Ranitidina 150mg',NULL,0,7,2,8.50,_binary '\0',NULL,NULL,NULL),(23,'MED-023',0,NULL,'Enalapril 10mg',NULL,0,6,2,5.00,_binary '\0',NULL,NULL,NULL),(24,'MED-024',1,NULL,'Tramadol 50mg',NULL,0,1,2,32.75,_binary '\0',NULL,NULL,NULL),(25,'MED-025',0,NULL,'Prednisona 5mg',NULL,0,3,2,18.90,_binary '\0',NULL,NULL,NULL),(26,'MED-026',0,NULL,'Clorfenamina 4mg',NULL,0,8,2,8.50,_binary '\0',NULL,NULL,NULL),(27,'MED-027',0,NULL,'Hidrocortisona Crema',NULL,0,3,8,38.00,_binary '\0',NULL,NULL,NULL),(28,'MED-028',1,NULL,'Insulina NPH',NULL,1,1,6,28.50,_binary '\0',NULL,NULL,NULL),(29,'MED-029',0,NULL,'Ketorolaco 10mg',NULL,0,1,2,5.00,_binary '\0',NULL,NULL,NULL),(30,'MED-030',0,NULL,'Clotrimazol ├ôvulos',NULL,0,10,1,45.50,_binary '\0',NULL,NULL,NULL);
+INSERT INTO `productos` VALUES (1,'',0,NULL,'Paracetamol 500mg','',0,1,2,5.00,_binary '\0',NULL,NULL,NULL),(2,'',0,NULL,'Amoxicilina 500 mg','',0,2,2,8.50,_binary '\0',NULL,NULL,NULL),(3,'MED-003',0,NULL,'Ibuprofeno 400 mg',NULL,0,3,2,12.75,_binary '\0',NULL,NULL,NULL),(4,'MED-004',0,NULL,'Salbutamol Inhalador',NULL,0,5,1,15.50,_binary '\0',NULL,NULL,NULL),(5,'MED-005',0,NULL,'Losartán 50 mg',NULL,0,6,2,18.90,_binary '\0',NULL,NULL,NULL),(6,'MED-006',0,NULL,'Vitamina C 1000mg',NULL,0,4,2,22.00,_binary '\0',NULL,NULL,NULL),(7,'MED-007',0,NULL,'Omeprazol 20mg',NULL,0,7,2,28.50,_binary '\0',NULL,NULL,NULL),(8,'MED-008',0,NULL,'Loratadina 10mg',NULL,0,8,2,32.75,_binary '\0',NULL,NULL,NULL),(9,'MED-009',0,NULL,'Azitromicina 500mg',NULL,0,2,2,38.00,_binary '','123','2026-06-02 22:25:18',1),(10,'MED-010',0,NULL,'Metformina 850mg',NULL,0,1,2,45.50,_binary '\0',NULL,NULL,NULL),(11,'MED-011',0,NULL,'Atorvastatina 20mg',NULL,0,6,2,5.00,_binary '\0',NULL,NULL,NULL),(12,'MED-012',0,NULL,'Diclofenaco 50mg',NULL,0,3,2,22.00,_binary '\0',NULL,NULL,NULL),(13,'MED-013',1,NULL,'Clonazepam 2mg',NULL,0,1,2,5.00,_binary '\0',NULL,NULL,NULL),(14,'MED-014',0,NULL,'Fluconazol 150mg',NULL,0,10,1,28.50,_binary '\0',NULL,NULL,NULL),(15,'MED-015',0,NULL,'Acetilcisteína 600mg',NULL,0,1,7,18.90,_binary '\0',NULL,NULL,NULL),(16,'MED-016',0,NULL,'Dexametasona 4mg',NULL,0,3,1,32.75,_binary '\0',NULL,NULL,NULL),(17,'MED-017',0,NULL,'Cetirizina 10mg',NULL,0,8,2,5.00,_binary '\0',NULL,NULL,NULL),(18,'MED-018',0,NULL,'Furosemida 40mg',NULL,0,6,2,38.00,_binary '\0',NULL,NULL,NULL),(19,'MED-019',0,NULL,'Ketoprofeno Gel',NULL,0,3,8,5.00,_binary '\0',NULL,NULL,NULL),(20,'MED-020',0,NULL,'Complejo B Inyectable',NULL,1,4,6,45.50,_binary '\0',NULL,NULL,NULL),(21,'MED-021',0,NULL,'Ciprofloxacino 500mg',NULL,0,2,2,28.50,_binary '\0',NULL,NULL,NULL),(22,'MED-022',0,NULL,'Ranitidina 150mg',NULL,0,7,2,8.50,_binary '\0',NULL,NULL,NULL),(23,'MED-023',0,NULL,'Enalapril 10mg',NULL,0,6,2,5.00,_binary '\0',NULL,NULL,NULL),(24,'MED-024',1,NULL,'Tramadol 50mg',NULL,0,1,2,32.75,_binary '\0',NULL,NULL,NULL),(25,'MED-025',0,NULL,'Prednisona 5mg',NULL,0,3,2,18.90,_binary '\0',NULL,NULL,NULL),(26,'MED-026',0,NULL,'Clorfenamina 4mg',NULL,0,8,2,8.50,_binary '\0',NULL,NULL,NULL),(27,'MED-027',0,NULL,'Hidrocortisona Crema',NULL,0,3,8,38.00,_binary '\0',NULL,NULL,NULL),(28,'MED-028',1,NULL,'Insulina NPH',NULL,1,1,6,28.50,_binary '\0',NULL,NULL,NULL),(29,'MED-029',0,NULL,'Ketorolaco 10mg',NULL,0,1,2,5.00,_binary '\0',NULL,NULL,NULL),(30,'MED-030',0,NULL,'Clotrimazol Óvulos',NULL,0,10,1,45.50,_binary '\0',NULL,NULL,NULL);
 /*!40000 ALTER TABLE `productos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -406,7 +406,7 @@ CREATE TABLE `proveedores` (
 
 LOCK TABLES `proveedores` WRITE;
 /*!40000 ALTER TABLE `proveedores` DISABLE KEYS */;
-INSERT INTO `proveedores` VALUES (1,NULL,NULL,NULL,'samuelchamorro2020@gmail.com','Ronald Martin','987 898 677',_binary ''),(2,NULL,NULL,NULL,'samuelchamorro2020@gmail.com','Mar├¡a Gonz├ílez SAC','956 789 123',_binary ''),(3,NULL,NULL,NULL,'samuelchamorro2020@gmail.com','FarmaPlus SAC','945 123 456',_binary ''),(4,NULL,NULL,NULL,'samuelchamorro2020@gmail.com','MediDistribuidora S.A.','901 234 567',_binary ''),(5,NULL,NULL,NULL,'samuelchamorro2020@gmail.com','Droguer├¡a Lima','987 654 321',_binary '');
+INSERT INTO `proveedores` VALUES (1,NULL,NULL,NULL,'samuelchamorro2020@gmail.com','Ronald Martin','987 898 677',_binary ''),(2,NULL,NULL,NULL,'samuelchamorro2020@gmail.com','María González SAC','956 789 123',_binary ''),(3,NULL,NULL,NULL,'samuelchamorro2020@gmail.com','FarmaPlus SAC','945 123 456',_binary ''),(4,NULL,NULL,NULL,'samuelchamorro2020@gmail.com','MediDistribuidora S.A.','901 234 567',_binary ''),(5,NULL,NULL,NULL,'samuelchamorro2020@gmail.com','Droguería Lima','987 654 321',_binary '');
 /*!40000 ALTER TABLE `proveedores` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -459,7 +459,7 @@ CREATE TABLE `sedes` (
 
 LOCK TABLES `sedes` WRITE;
 /*!40000 ALTER TABLE `sedes` DISABLE KEYS */;
-INSERT INTO `sedes` VALUES (1,'SEDE-001',NULL,NULL,NULL,NULL,'Cl├¡nica Principal - Lima'),(2,'SEDE-002',NULL,NULL,NULL,NULL,'Sucursal Norte - Trujillo'),(3,'SEDE-003',NULL,NULL,NULL,NULL,'Sucursal Sur - Arequipa');
+INSERT INTO `sedes` VALUES (1,'SEDE-001',NULL,NULL,NULL,NULL,'Clínica Principal - Lima'),(2,'SEDE-002',NULL,NULL,NULL,NULL,'Sucursal Norte - Trujillo'),(3,'SEDE-003',NULL,NULL,NULL,NULL,'Sucursal Sur - Arequipa');
 /*!40000 ALTER TABLE `sedes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -710,7 +710,7 @@ CREATE TABLE `usuarios` (
 
 LOCK TABLES `usuarios` WRITE;
 /*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
-INSERT INTO `usuarios` VALUES (1,1,NULL,'admin@medic.com','Admin Sistema','$2a$10$j5hfd010eY7BV7teZnr56.LX4Oe15dGeBTqZ2ctZr6v0Zdro7S3E.',1),(2,1,NULL,'juan.perez@medic.com','Juan P├®rez Garc├¡a','$2a$10$xKEK2q42JlDwJOS8VB6tTONozN6XbVmj2Qu2Xf8mbXSzNAwBkVkey',3),(3,1,NULL,'ana.torres@medic.com','Dra. Ana Torres','$2a$10$1cE7uwyhtKbH8Tk2/iWEl.U3vIhWVpbY5yxM36nvrJQwI7wm6boAi',2),(5,1,'2025-11-09 18:09:14.000000','jefe@medic.com','Dr. Luis Martínez - Jefe de Farmacia','$2a$10$GVm.GUjPgI8zyCDeSBewfeh/cTZk94Xd6gwyt5AuiF5K.9LON7BQ6',5),(6,1,'2026-06-01 23:02:56.876845','francos@gmail.com','Franco','$2a$10$YuV9q0Ssw3RvpOL8bRHUX.LdXRwmDIRLCQjPkswhFU4aaYF9J7xPG',3);
+INSERT INTO `usuarios` VALUES (1,1,NULL,'admin@medic.com','Admin Sistema','$2a$10$j5hfd010eY7BV7teZnr56.LX4Oe15dGeBTqZ2ctZr6v0Zdro7S3E.',1),(2,1,NULL,'juan.perez@medic.com','Juan Pérez García','$2a$10$xKEK2q42JlDwJOS8VB6tTONozN6XbVmj2Qu2Xf8mbXSzNAwBkVkey',3),(3,1,NULL,'ana.torres@medic.com','Dra. Ana Torres','$2a$10$1cE7uwyhtKbH8Tk2/iWEl.U3vIhWVpbY5yxM36nvrJQwI7wm6boAi',2),(5,1,'2025-11-09 18:09:14.000000','jefe@medic.com','Dr. Luis Martínez - Jefe de Farmacia','$2a$10$GVm.GUjPgI8zyCDeSBewfeh/cTZk94Xd6gwyt5AuiF5K.9LON7BQ6',5),(6,1,'2026-06-01 23:02:56.876845','francos@gmail.com','Franco','$2a$10$YuV9q0Ssw3RvpOL8bRHUX.LdXRwmDIRLCQjPkswhFU4aaYF9J7xPG',3);
 /*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -731,4 +731,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-06-20 18:52:02
+-- Dump completed on 2026-06-21  2:28:37

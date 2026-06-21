@@ -2,9 +2,14 @@ package com.medic.inventory.controller;
 
 import com.medic.inventory.dto.BloqueoLoteRequest;
 import com.medic.inventory.dto.LoteResponse;
+import com.medic.inventory.entity.User;
+import com.medic.inventory.repository.UserRepository;
 import com.medic.inventory.service.LoteService;
+import com.medic.inventory.service.AuditLogService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +25,8 @@ import java.util.List;
 public class LoteController {
 
     private final LoteService loteService;
+    private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     /**
      * HU-11: Obtener lotes ordenados por fecha de vencimiento (FEFO)
@@ -106,9 +113,13 @@ public class LoteController {
     @PutMapping("/{loteId}/bloquear")
     public ResponseEntity<?> bloquearLote(
             @PathVariable Long loteId,
-            @RequestBody BloqueoLoteRequest request) {
+            @RequestBody BloqueoLoteRequest request,
+            Authentication authentication,
+            HttpServletRequest httpRequest) {
         try {
             LoteResponse lote = loteService.bloquearLote(loteId, request.getMotivo());
+            registrarAuditoria(authentication, httpRequest, "LOTE_BLOQUEADO", loteId,
+                "Bloqueo de lote " + lote.getCodigoLote() + " - Motivo: " + request.getMotivo());
             return ResponseEntity.ok(lote);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
@@ -126,12 +137,32 @@ public class LoteController {
     @PutMapping("/{loteId}/desbloquear")
     public ResponseEntity<?> desbloquearLote(
             @PathVariable Long loteId,
-            @RequestBody BloqueoLoteRequest request) {
+            @RequestBody BloqueoLoteRequest request,
+            Authentication authentication,
+            HttpServletRequest httpRequest) {
         try {
             LoteResponse lote = loteService.desbloquearLote(loteId, request.getMotivo());
+            registrarAuditoria(authentication, httpRequest, "LOTE_DESBLOQUEADO", loteId,
+                "Desbloqueo de lote " + lote.getCodigoLote() + " - Motivo: " + request.getMotivo());
             return ResponseEntity.ok(lote);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    // CP016/HU-16: registra la accion en la bitacora de auditoria
+    private void registrarAuditoria(Authentication authentication, HttpServletRequest httpRequest,
+                                    String accion, Long entidadId, String descripcion) {
+        try {
+            if (authentication == null) return;
+            User user = userRepository.findByEmail(authentication.getName()).orElse(null);
+            if (user == null) return;
+            String ip = httpRequest.getHeader("X-Forwarded-For");
+            if (ip == null || ip.isEmpty()) ip = httpRequest.getRemoteAddr();
+            auditLogService.logAction(user.getId(), user.getNombreCompleto(), accion,
+                "Lote", entidadId, descripcion, ip);
+        } catch (Exception e) {
+            // la auditoria no debe romper la operacion principal
         }
     }
 

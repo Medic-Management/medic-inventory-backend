@@ -117,6 +117,12 @@ public class DispensacionService {
             response.setOcurrioEn(mov.getOcurrioEn());
             response.setDispensadoPor(mov.getCreadoPor() != null ? mov.getCreadoPor().longValue() : null);
 
+            // CP016: incluir el nombre del usuario que dispensó
+            if (mov.getCreadoPor() != null) {
+                userRepository.findById(mov.getCreadoPor().longValue()).ifPresent(user ->
+                    response.setDispensadoPorNombre(user.getNombreCompleto()));
+            }
+
             loteRepository.findById(mov.getLoteId()).ifPresent(lote -> {
                 response.setLoteId(lote.getId());
                 response.setCodigoLote(lote.getCodigoProductoProv());

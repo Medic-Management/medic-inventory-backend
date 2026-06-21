@@ -22,6 +22,7 @@ public class SolicitudCompraController {
 
     private final SolicitudCompraService solicitudCompraService;
     private final UserRepository userRepository;
+    private final com.medic.inventory.service.AuditLogService auditLogService;
 
     @GetMapping
     public ResponseEntity<List<SolicitudCompraResponse>> obtenerSolicitudes() {
@@ -96,6 +97,12 @@ public class SolicitudCompraController {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
             SolicitudCompraResponse response = solicitudCompraService.aprobarBorrador(id, user.getId());
+            // CP016/HU-16: registrar la aprobación en la bitácora
+            try {
+                auditLogService.logAction(user.getId(), user.getNombreCompleto(),
+                    "SOLICITUD_APROBADA", "SolicitudCompra", id,
+                    "Aprobación de la solicitud #" + id, null);
+            } catch (Exception ignore) { }
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
