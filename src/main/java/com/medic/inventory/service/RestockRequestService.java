@@ -273,13 +273,14 @@ public class RestockRequestService {
     }
 
     private String generateDefaultEmailBody(Product product, Integer requestedQuantity, Integer currentStock, Integer alertLevel) {
+        // Texto sin tildes/caracteres especiales para evitar problemas de codificacion en el envio (UiPath)
         return String.format(
             "Estimado proveedor,\n\n" +
-            "Solicitamos el envío de %d unidades de %s para mantener el nivel de stock óptimo.\n\n" +
+            "Solicitamos el envio de %d unidades de %s para mantener el nivel de stock optimo.\n\n" +
             "Stock actual: %d unidades\n" +
             "Nivel de alerta: %d unidades\n\n" +
             "Atentamente,\n" +
-            "Clínica Vestida de Sol - Área de Farmacia.",
+            "Clinica Vestida de Sol - Area de Farmacia.",
             requestedQuantity != null ? requestedQuantity : 0,
             product.getName(),
             currentStock != null ? currentStock : 0,

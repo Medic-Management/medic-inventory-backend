@@ -433,14 +433,15 @@ public class SolicitudCompraService {
         String proveedor = solicitud.getSupplier() != null && solicitud.getSupplier().getNombre() != null
             ? solicitud.getSupplier().getNombre() : "proveedor";
 
+        // Texto sin tildes/caracteres especiales para evitar problemas de codificacion en el envio (UiPath)
         solicitud.setEmailSubject("Solicitud de reabastecimiento - " + nombre);
         solicitud.setEmailBody(String.format(
             "Estimado %s,\n\n" +
-            "Solicitamos el envío de %d unidades de %s para mantener el nivel de stock óptimo.\n\n" +
+            "Solicitamos el envio de %d unidades de %s para mantener el nivel de stock optimo.\n\n" +
             "Stock actual: %d unidades\n" +
             "Nivel de alerta: %d unidades\n\n" +
             "Atentamente,\n" +
-            "Clínica Vestida de Sol - Área de Farmacia.",
+            "Clinica Vestida de Sol - Area de Farmacia.",
             proveedor, cantidad, nombre, stockReal, nivelAlerta));
     }
 
