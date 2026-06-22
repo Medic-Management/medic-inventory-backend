@@ -261,6 +261,9 @@ public class SolicitudCompraService {
         solicitud.setAprobadoPor(userId);
         solicitud.setFechaAprobacion(java.time.LocalDateTime.now());
 
+        // CP008/CP009: componer el correo para que no salga vacío cuando UiPath lo procese
+        componerCorreoPedido(solicitud);
+
         solicitud = restockRequestRepository.save(solicitud);
         return mapToResponse(solicitud);
     }
@@ -291,6 +294,9 @@ public class SolicitudCompraService {
 
         solicitud.setStatus(RestockRequest.RestockStatus.PENDING);
         solicitud.setEmailSent(false);
+
+        // CP019: recomponer el correo al reenviar para que no salga vacío
+        componerCorreoPedido(solicitud);
 
         solicitud = restockRequestRepository.save(solicitud);
         return mapToResponse(solicitud);
