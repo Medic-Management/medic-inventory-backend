@@ -24,6 +24,8 @@ public class SolicitudCompraService {
     private final SedeRepository sedeRepository;
     private final UmbralStockRepository umbralStockRepository;
     private final TrabajoRpaRepository trabajoRpaRepository;
+    private final com.medic.inventory.repository.LoteRepository loteRepository;
+    private final com.medic.inventory.repository.InventarioRepository inventarioRepository;
 
     @Transactional
     public SolicitudCompraResponse crearSolicitud(SolicitudCompraRequest request, Long userId) {
@@ -396,6 +398,9 @@ public class SolicitudCompraService {
             throw new RuntimeException("Solo se pueden enviar solicitudes en estado PENDING");
         }
 
+        // CP009: componer el correo (asunto + cuerpo) que UiPath enviará al proveedor
+        componerCorreoPedido(solicitud);
+
         // Cambiar estado a SENT
         solicitud.setStatus(RestockRequest.RestockStatus.SENT);
         solicitud.setEmailSent(false);
@@ -409,6 +414,46 @@ public class SolicitudCompraService {
         trabajoRpaRepository.save(trabajoRpa);
 
         return mapToResponse(solicitud);
+    }
+
+    /** CP009: arma asunto y cuerpo del correo del pedido con datos reales. */
+    private void componerCorreoPedido(RestockRequest solicitud) {
+        Product producto = solicitud.getProduct();
+        if (producto == null) return;
+        String nombre = producto.getName() != null ? producto.getName() : "medicamento";
+        int cantidad = solicitud.getRequestedQuantity() != null ? solicitud.getRequestedQuantity() : 0;
+        int stockReal = calcularStockReal(producto.getId());
+        int nivelAlerta = obtenerNivelAlertaProducto(producto.getId());
+        String proveedor = solicitud.getSupplier() != null && solicitud.getSupplier().getNombre() != null
+            ? solicitud.getSupplier().getNombre() : "proveedor";
+
+        solicitud.setEmailSubject("Solicitud de reabastecimiento - " + nombre);
+        solicitud.setEmailBody(String.format(
+            "Estimado %s,\n\n" +
+            "Solicitamos el envío de %d unidades de %s para mantener el nivel de stock óptimo.\n\n" +
+            "Stock actual: %d unidades\n" +
+            "Nivel de alerta: %d unidades\n\n" +
+            "Atentamente,\n" +
+            "Clínica Vestida de Sol - Área de Farmacia.",
+            proveedor, cantidad, nombre, stockReal, nivelAlerta));
+    }
+
+    private int calcularStockReal(Long productoId) {
+        int total = 0;
+        for (com.medic.inventory.entity.Lote lote : loteRepository.findByProductoId(productoId)) {
+            for (com.medic.inventory.entity.Inventario inv : inventarioRepository.findByLoteId(lote.getId())) {
+                if (inv.getCantidad() != null) total += inv.getCantidad();
+            }
+        }
+        return total;
+    }
+
+    private int obtenerNivelAlertaProducto(Long productoId) {
+        return umbralStockRepository.findAll().stream()
+            .filter(u -> u.getProducto() != null && u.getProducto().getId().equals(productoId))
+            .map(u -> u.getMinimo())
+            .filter(java.util.Objects::nonNull)
+            .findFirst().orElse(0);
     }
 
     // CP009: Enviar TODAS las solicitudes aprobadas al proveedor

@@ -105,6 +105,8 @@ public class SolicitudCompraController {
             } catch (Exception ignore) { }
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
+            // Log para no tener un 400 ciego (antes no se veia el motivo en backend)
+            System.err.println("[aprobarBorrador] Error aprobando solicitud " + id + ": " + e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }

@@ -8,6 +8,9 @@ import com.medic.inventory.entity.Supplier;
 import com.medic.inventory.repository.ProductRepository;
 import com.medic.inventory.repository.RestockRequestRepository;
 import com.medic.inventory.repository.SupplierRepository;
+import com.medic.inventory.repository.InventarioRepository;
+import com.medic.inventory.repository.LoteRepository;
+import com.medic.inventory.repository.UmbralStockRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +34,39 @@ public class RestockRequestService {
 
     @Autowired
     private SupplierRepository supplierRepository;
+
+    @Autowired
+    private InventarioRepository inventarioRepository;
+
+    @Autowired
+    private LoteRepository loteRepository;
+
+    @Autowired
+    private UmbralStockRepository umbralStockRepository;
+
+    /**
+     * Stock real del producto = suma de cantidades en inventario de todos sus lotes.
+     * El campo product.quantity puede estar desactualizado (0); el stock vive en inventario.
+     */
+    private int calcularStockReal(Long productoId) {
+        int total = 0;
+        for (com.medic.inventory.entity.Lote lote : loteRepository.findByProductoId(productoId)) {
+            for (com.medic.inventory.entity.Inventario inv : inventarioRepository.findByLoteId(lote.getId())) {
+                if (inv.getCantidad() != null) total += inv.getCantidad();
+            }
+        }
+        return total;
+    }
+
+    /** Nivel de alerta (mínimo) configurado en el umbral del producto. */
+    private int obtenerNivelAlerta(Long productoId, Integer fallback) {
+        return umbralStockRepository.findAll().stream()
+            .filter(u -> u.getProducto() != null && u.getProducto().getId().equals(productoId))
+            .map(u -> u.getMinimo())
+            .filter(java.util.Objects::nonNull)
+            .findFirst()
+            .orElse(fallback != null ? fallback : 0);
+    }
 
     public List<RestockRequest> getAllRestockRequests() {
         return restockRequestRepository.findAll();
@@ -74,15 +110,19 @@ public class RestockRequestService {
         RestockRequest request = new RestockRequest();
         request.setProduct(product);
         request.setSupplier(supplier);
+        // Stock y nivel de alerta REALES (inventario + umbral), no los campos viejos del producto
+        int stockReal = calcularStockReal(product.getId());
+        int nivelAlerta = obtenerNivelAlerta(product.getId(), product.getAlertValue());
+
         request.setRequestedQuantity(dto.getRequestedQuantity());
-        request.setCurrentStock(product.getQuantity());
-        request.setAlertLevel(product.getAlertValue());
+        request.setCurrentStock(stockReal);
+        request.setAlertLevel(nivelAlerta);
         request.setNotes(dto.getNotes());
         request.setStatus(RestockStatus.PENDING);
         request.setEmailSent(false);
 
         request.setEmailSubject("Solicitud de reabastecimiento - " + product.getName());
-        request.setEmailBody(generateDefaultEmailBody(product, dto.getRequestedQuantity(), product.getQuantity(), product.getAlertValue()));
+        request.setEmailBody(generateDefaultEmailBody(product, dto.getRequestedQuantity(), stockReal, nivelAlerta));
 
         return createRestockRequest(request);
     }
@@ -189,11 +229,14 @@ public class RestockRequestService {
         RestockRequest request = new RestockRequest();
         request.setProduct(product);
         request.setSupplier(product.getSupplier());
-        request.setCurrentStock(product.getQuantity());
-        request.setAlertLevel(product.getAlertValue());
 
-        Integer requestedQty = product.getInitialStock() - product.getQuantity();
-        request.setRequestedQuantity(Math.max(requestedQty, product.getAlertValue() * 2));
+        int stockReal = calcularStockReal(product.getId());
+        int nivelAlerta = obtenerNivelAlerta(product.getId(), product.getAlertValue());
+        request.setCurrentStock(stockReal);
+        request.setAlertLevel(nivelAlerta);
+
+        Integer requestedQty = (product.getInitialStock() != null ? product.getInitialStock() : 0) - stockReal;
+        request.setRequestedQuantity(Math.max(requestedQty, Math.max(nivelAlerta * 2, 1)));
 
         request.setStatus(RestockStatus.PENDING);
         request.setNotes("Automatic restock request - low stock alert");
